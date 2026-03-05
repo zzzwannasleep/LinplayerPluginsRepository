@@ -1,0 +1,26 @@
+# Ensure stable sha256/size across platforms (avoid CRLF/LF mismatches)
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.svg  text eol=lf
+*.txt  text eol=lf
+*.ps1  text eol=lf
+*.py   text eol=lf
+
+# Binary files
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.zip  binary
+*.7z   binary
+*.rar  binary
+*.apk  binary
+*.ipa  binary
+*.mp3  binary
+*.mp4  binary
+*.mkv  binary
