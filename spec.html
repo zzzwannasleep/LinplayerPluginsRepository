@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Linplayer 插件规范</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="stylesheet" href="assets/market.css" />
+    <link rel="stylesheet" href="assets/spec.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="top__inner">
+        <div class="brand">
+          <img class="brand__logo" src="assets/favicon.svg" alt="" />
+          <div class="brand__text">
+            <div class="brand__title">Linplayer 插件规范</div>
+            <div class="brand__subtitle">在线阅读（来自 SPEC.md）</div>
+          </div>
+        </div>
+
+        <nav class="top__nav">
+          <a class="link" href="./">市场</a>
+          <a class="link" href="SPEC.md" target="_blank" rel="noreferrer">下载 Markdown</a>
+          <a class="link" href="https://github.com/zzzwannasleep/LinplayerPluginsRepository" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="panel doc">
+        <div class="doc__bar">
+          <div class="doc__left">
+            <div class="doc__kicker">目录</div>
+            <div id="toc" class="toc"></div>
+          </div>
+
+          <div class="doc__right">
+            <div id="status" class="doc__status">正在加载 SPEC.md…</div>
+            <article id="content" class="md" aria-live="polite"></article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <noscript>
+      <div class="noscript">该页面需要启用 JavaScript 才能渲染 Markdown。</div>
+    </noscript>
+
+    <script type="module" src="assets/spec.js"></script>
+  </body>
+</html>
