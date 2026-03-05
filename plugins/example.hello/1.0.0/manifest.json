@@ -1,4 +1,4 @@
-﻿{
+{
     "schemaVersion":  1,
     "id":  "example.hello",
     "name":  "Hello Plugin",
@@ -36,13 +36,13 @@
     "files":  [
                   {
                       "path":  "icon.svg",
-                      "size":  348,
-                      "sha256":  "a6fa80784316af9275d5177380a4ef7cd5cecf400d4556b986c098e5a5f0d7be"
+                      "size":  354,
+                      "sha256":  "25cd851b93611b827bf55fd7f4da81da65791ff9f1cd7e514e81ca2eaf60edfb"
                   },
                   {
                       "path":  "main.js",
-                      "size":  1894,
-                      "sha256":  "60da12c122079244bbb649d56d8ea2cde58914cec9b1682710ecb9fdc835aee9"
+                      "size":  1968,
+                      "sha256":  "1404441ed3a52d96588a314a14aaabe37ea78f4ea7328d87464aae18f6e6fd85"
                   }
               ],
     "contributions":  {

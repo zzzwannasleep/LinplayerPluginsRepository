@@ -77,7 +77,7 @@ def main() -> None:
     if not manifest_path.exists():
         raise SystemExit(f"未找到：{manifest_path}")
 
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
 
     if args.scan:
         manifest["files"] = scan_files(plugin_dir, include_docs=args.include_docs)

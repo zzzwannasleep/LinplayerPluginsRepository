@@ -62,6 +62,7 @@ if ($Scan) {
 }
 
 $out = $manifestJson | ConvertTo-Json -Depth 100
-Set-Content -Path $manifestPath -Value $out -Encoding UTF8
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($manifestPath, $out + "`n", $utf8NoBom)
 Write-Output "OK: updated $manifestPath"
 

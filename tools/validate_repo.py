@@ -24,7 +24,7 @@ def err(msg: str) -> None:
 
 def validate_json_file(path: Path) -> bool:
     try:
-        json.loads(path.read_text(encoding="utf-8"))
+        json.loads(path.read_text(encoding="utf-8-sig"))
         return True
     except Exception as e:
         err(f"Invalid JSON: {path} ({e})")
@@ -38,7 +38,7 @@ def validate_manifest(manifest_path: Path) -> bool:
     plugin_id_dir = plugin_dir.parent.name
 
     try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
     except Exception as e:
         err(f"Invalid JSON: {manifest_path} ({e})")
         return False
