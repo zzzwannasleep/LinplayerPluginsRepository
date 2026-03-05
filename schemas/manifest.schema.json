@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/plugin-manifest.schema.json",
+  "title": "Plugin Manifest (schemaVersion=1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "description",
+    "version",
+    "apiVersion",
+    "minHostVersion",
+    "targets",
+    "entry",
+    "permissions",
+    "files"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "description": { "type": "string", "minLength": 1, "maxLength": 300 },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "apiVersion": { "type": "integer", "minimum": 1 },
+    "minHostVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "homepage": { "type": "string", "format": "uri" }
+      }
+    },
+    "homepage": { "type": "string", "format": "uri" },
+    "license": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "tags": { "type": "array", "items": { "type": "string", "maxLength": 30 }, "maxItems": 30, "uniqueItems": true },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "enum": ["tv", "mobile", "pc"] }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tv": { "$ref": "#/$defs/entryItem" },
+        "mobile": { "$ref": "#/$defs/entryItem" },
+        "pc": { "$ref": "#/$defs/entryItem" }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["network"],
+      "properties": {
+        "network": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "domains"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "domains": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1, "maxLength": 255 },
+              "maxItems": 200
+            }
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/fileItem" }
+    },
+    "contributions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pages": { "type": "array", "items": { "$ref": "#/$defs/pageContribution" }, "maxItems": 200 },
+        "dataSources": { "type": "array", "items": { "$ref": "#/$defs/dataSourceContribution" }, "maxItems": 200 },
+        "playSources": { "type": "array", "items": { "$ref": "#/$defs/playSourceContribution" }, "maxItems": 200 },
+        "tasks": { "type": "array", "items": { "$ref": "#/$defs/taskContribution" }, "maxItems": 200 },
+        "uiComponents": { "type": "array", "items": { "$ref": "#/$defs/uiComponentContribution" }, "maxItems": 200 }
+      }
+    },
+    "settingsSchema": { "$ref": "#/$defs/formSchema" }
+  },
+  "$defs": {
+    "entryItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["script"],
+      "properties": {
+        "script": { "type": "string", "minLength": 1, "maxLength": 300 }
+      }
+    },
+    "fileItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "size": { "type": "integer", "minimum": 0 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "formSchema": {
+      "type": "array",
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/formField" }
+    },
+    "formField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "title", "type"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "type": {
+          "type": "string",
+          "enum": [
+            "input",
+            "textarea",
+            "number",
+            "boolean",
+            "enumeration",
+            "language",
+            "page",
+            "constant",
+            "secret"
+          ]
+        },
+        "description": { "type": "string", "maxLength": 300 },
+        "placeholder": { "type": "string", "maxLength": 200 },
+        "value": {},
+        "enumOptions": {
+          "type": "array",
+          "maxItems": 200,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["title", "value"],
+            "properties": {
+              "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "value": {}
+            }
+          }
+        }
+      }
+    },
+    "pageContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "render"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "route": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "targets": { "type": "array", "items": { "type": "string", "enum": ["tv", "mobile", "pc"] }, "uniqueItems": true },
+        "render": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "onEvent": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "dataSourceContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "list"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "cacheTtlSeconds": { "type": "integer", "minimum": 0, "maximum": 31536000 },
+        "params": { "$ref": "#/$defs/formSchema" },
+        "list": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "detail": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "playSourceContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "resolve"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "resolve": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "taskContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "triggers", "run"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "targets": { "type": "array", "items": { "type": "string", "enum": ["tv", "mobile", "pc"] }, "uniqueItems": true },
+        "triggers": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+              "type": { "type": "string", "enum": ["manual", "onStart", "cron", "interval"] },
+              "expr": { "type": "string", "maxLength": 100 }
+            }
+          }
+        },
+        "run": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "uiComponentContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "schemaType", "render"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "title": { "type": "string", "maxLength": 80 },
+        "schemaType": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "render": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    }
+  }
+}
+

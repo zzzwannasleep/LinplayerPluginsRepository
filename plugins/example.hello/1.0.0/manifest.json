@@ -1,0 +1,64 @@
+﻿{
+    "schemaVersion":  1,
+    "id":  "example.hello",
+    "name":  "Hello Plugin",
+    "description":  "演示：页面 + 事件 + 网络请求（通过 ctx.net.request）",
+    "version":  "1.0.0",
+    "apiVersion":  1,
+    "minHostVersion":  "0.0.1",
+    "author":  {
+                   "name":  "Example"
+               },
+    "targets":  [
+                    "tv",
+                    "mobile",
+                    "pc"
+                ],
+    "entry":  {
+                  "tv":  {
+                             "script":  "main.js"
+                         },
+                  "mobile":  {
+                                 "script":  "main.js"
+                             },
+                  "pc":  {
+                             "script":  "main.js"
+                         }
+              },
+    "permissions":  {
+                        "network":  {
+                                        "enabled":  true,
+                                        "domains":  [
+                                                        "*"
+                                                    ]
+                                    }
+                    },
+    "files":  [
+                  {
+                      "path":  "icon.svg",
+                      "size":  348,
+                      "sha256":  "a6fa80784316af9275d5177380a4ef7cd5cecf400d4556b986c098e5a5f0d7be"
+                  },
+                  {
+                      "path":  "main.js",
+                      "size":  1894,
+                      "sha256":  "60da12c122079244bbb649d56d8ea2cde58914cec9b1682710ecb9fdc835aee9"
+                  }
+              ],
+    "contributions":  {
+                          "pages":  [
+                                        {
+                                            "id":  "home",
+                                            "title":  "Hello Plugin",
+                                            "route":  "/plugin/example.hello/home",
+                                            "targets":  [
+                                                            "tv",
+                                                            "mobile",
+                                                            "pc"
+                                                        ],
+                                            "render":  "page_home_render",
+                                            "onEvent":  "page_home_onEvent"
+                                        }
+                                    ]
+                      }
+}
