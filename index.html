@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Linplayer 插件市场</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="stylesheet" href="assets/market.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="top__inner">
+        <div class="brand">
+          <img class="brand__logo" src="assets/favicon.svg" alt="" />
+          <div class="brand__text">
+            <div class="brand__title">Linplayer 插件市场</div>
+            <div class="brand__subtitle">复制安装链接到 App 即可安装</div>
+          </div>
+        </div>
+
+        <nav class="top__nav">
+          <a class="link" href="SPEC.md" target="_blank" rel="noreferrer">规范</a>
+          <a class="link" href="https://github.com/zzzwannasleep/LinplayerPluginsRepository" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="panel">
+        <div class="controls">
+          <label class="field">
+            <span class="field__label">搜索</span>
+            <input id="q" class="input" placeholder="按名称 / ID / 描述 / 标签" autocomplete="off" />
+          </label>
+
+          <label class="field">
+            <span class="field__label">端</span>
+            <select id="target" class="select">
+              <option value="all">全部</option>
+              <option value="tv">TV</option>
+              <option value="mobile">移动端</option>
+              <option value="pc">PC</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field__label">通道</span>
+            <select id="channel" class="select">
+              <option value="stable">stable</option>
+              <option value="beta">beta</option>
+              <option value="dev">dev</option>
+              <option value="all">all</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field__label">排序</span>
+            <select id="sort" class="select">
+              <option value="name">名称</option>
+              <option value="id">ID</option>
+              <option value="version">最新版本</option>
+            </select>
+          </label>
+
+          <label class="check">
+            <input id="showBlocked" type="checkbox" checked />
+            <span>显示已下架</span>
+          </label>
+        </div>
+
+        <div id="status" class="status">
+          <div class="status__left">
+            <span id="count">0</span> 个插件
+            <span class="dot">•</span>
+            registry 更新于 <span id="updatedAt">-</span>
+          </div>
+          <div class="status__right" id="warn"></div>
+        </div>
+      </section>
+
+      <section>
+        <div id="list" class="grid"></div>
+      </section>
+
+      <section class="footnote">
+        <details>
+          <summary>免责声明</summary>
+          <p>本仓库插件由社区贡献，仅供学习交流。插件可能访问第三方站点并返回不稳定结果。请在合法合规前提下使用。仓库维护者不对插件内容与由此带来的损失承担责任。</p>
+        </details>
+      </section>
+    </main>
+
+    <div id="modal" class="modal" aria-hidden="true">
+      <div class="modal__overlay" data-close="1"></div>
+      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal__header">
+          <div>
+            <div id="modalTitle" class="modal__title"></div>
+            <div id="modalSub" class="modal__sub"></div>
+          </div>
+          <button class="iconbtn" title="关闭" data-close="1">×</button>
+        </div>
+
+        <div class="modal__body">
+          <div id="modalBadges" class="badges"></div>
+          <p id="modalDesc" class="modal__desc"></p>
+
+          <h3 class="h3">版本</h3>
+          <div class="tablewrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>channel</th>
+                  <th>version</th>
+                  <th>minHost</th>
+                  <th>安装链接</th>
+                </tr>
+              </thead>
+              <tbody id="modalVersions"></tbody>
+            </table>
+          </div>
+
+          <div id="modalBlocked" class="blocked"></div>
+        </div>
+
+        <div class="modal__footer">
+          <button class="btn" data-close="1">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <noscript>
+      <div class="noscript">该页面需要启用 JavaScript 才能加载插件列表。</div>
+    </noscript>
+
+    <script type="module" src="assets/market.js"></script>
+  </body>
+</html>

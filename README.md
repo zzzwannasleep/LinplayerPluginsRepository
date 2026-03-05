@@ -33,4 +33,13 @@ https://raw.githubusercontent.com/<owner>/<repo>/<ref>/plugins/<pluginId>/<versi
 > 本仓库插件由社区贡献，仅供学习交流。插件可能访问第三方站点并返回不稳定结果。请在合法合规前提下使用。仓库维护者不对插件内容与由此带来的损失承担责任。
 
 更完整的规范见：`SPEC.md`。
+## 前端页面（Cloudflare Pages）
 
+仓库根目录的 `index.html` 是一个零依赖的静态插件市场页：
+- 自动读取 `registry.json` / `blocked.json`
+- 支持搜索、按端筛选、复制安装链接
+
+部署到 Cloudflare Pages：
+- 直接把本仓库连接到 Pages
+- Build command：留空（或 `echo skip`）
+- Build output directory：`.`

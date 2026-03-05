@@ -1,24 +1,32 @@
 {
-  "schemaVersion": 1,
-  "updatedAt": "2026-03-05T00:00:00Z",
-  "plugins": [
-    {
-      "id": "example.hello",
-      "name": "Hello Plugin",
-      "description": "演示：页面 + 事件 + 网络请求（通过 ctx.net.request）",
-      "author": { "name": "Example" },
-      "tags": ["demo", "page"],
-      "targets": ["tv", "mobile", "pc"],
-      "versions": [
-        {
-          "version": "1.0.0",
-          "channel": "stable",
-          "apiVersion": 1,
-          "minHostVersion": "0.0.1",
-          "manifestUrl": "https://raw.githubusercontent.com/<owner>/<repo>/<ref>/plugins/example.hello/1.0.0/manifest.json"
-        }
-      ]
-    }
-  ]
+    "schemaVersion":  1,
+    "updatedAt":  "2026-03-05T13:18:00Z",
+    "plugins":  [
+                    {
+                        "id":  "example.hello",
+                        "name":  "Hello Plugin",
+                        "description":  "演示：页面 + 事件 + 网络请求（通过 ctx.net.request）",
+                        "author":  {
+                                       "name":  "Example"
+                                   },
+                        "tags":  [
+                                     "demo",
+                                     "page"
+                                 ],
+                        "targets":  [
+                                        "tv",
+                                        "mobile",
+                                        "pc"
+                                    ],
+                        "versions":  [
+                                         {
+                                             "version":  "1.0.0",
+                                             "channel":  "stable",
+                                             "apiVersion":  1,
+                                             "minHostVersion":  "0.0.1",
+                                             "manifestUrl":  "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/example.hello/1.0.0/manifest.json"
+                                         }
+                                     ]
+                    }
+                ]
 }
-

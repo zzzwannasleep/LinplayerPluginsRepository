@@ -1,0 +1,13 @@
+/registry.json
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=60
+
+/blocked.json
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=60
+
+/plugins/*
+  Access-Control-Allow-Origin: *
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -24,3 +24,5 @@
 *.mp3  binary
 *.mp4  binary
 *.mkv  binary
+*.html text eol=lf
+*.css  text eol=lf
