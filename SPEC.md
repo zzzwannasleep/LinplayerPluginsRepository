@@ -25,14 +25,14 @@
    └─ <pluginId>/
       └─ <version>/
          ├─ manifest.json
-         ├─ main.js
-         └─ icon.svg
+         └─ main.js
 ```
 
 说明：
 - 一个插件一个文件夹（`plugins/<pluginId>/`）
 - 每个版本一个子目录（`plugins/<pluginId>/<version>/`）
 - 不使用 GitHub Releases 打包：宿主按 `manifest.json` 的 `files[]` 列表逐个下载文件
+- 图标可选：如需在市场页展示，可在版本目录放入 `icon.svg` 或 `icon.png`，并把它们加入 `files[]`
 
 ## 3. 安装链接（复制到 App）
 
@@ -128,11 +128,12 @@ v1 仅定义网络权限：
 ```json
 {
   "files": [
-    { "path": "main.js", "size": 1234, "sha256": "64位十六进制" },
-    { "path": "icon.svg", "size": 567, "sha256": "64位十六进制" }
+    { "path": "main.js", "size": 1234, "sha256": "64位十六进制" }
   ]
 }
 ```
+
+说明：图标并非必需；如需在市场页展示，可添加 `icon.svg` 或 `icon.png`，并把它们加入 `files[]`。
 
 规则：
 - `path` 必须是相对路径、使用 `/` 分隔

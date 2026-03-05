@@ -35,11 +35,6 @@
                     },
     "files":  [
                   {
-                      "path":  "icon.svg",
-                      "size":  348,
-                      "sha256":  "a6fa80784316af9275d5177380a4ef7cd5cecf400d4556b986c098e5a5f0d7be"
-                  },
-                  {
                       "path":  "main.js",
                       "size":  1894,
                       "sha256":  "60da12c122079244bbb649d56d8ea2cde58914cec9b1682710ecb9fdc835aee9"

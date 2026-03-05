@@ -305,8 +305,7 @@ function renderList() {
         if (wrap) {
           wrap.innerHTML = `<span>${escapeHtml(String(plugin?.name ?? id).slice(0, 1).toUpperCase())}</span>`;
         }
-      },
-      { once: true }
+      }
     );
   }
 }

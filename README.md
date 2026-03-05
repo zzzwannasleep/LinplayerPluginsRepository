@@ -23,7 +23,7 @@ https://raw.githubusercontent.com/<owner>/<repo>/<ref>/plugins/<pluginId>/<versi
 ## 发布流程（最简）
 
 1. 新建目录 `plugins/<pluginId>/<version>/`
-2. 放入入口脚本/资源（例如 `main.js`、`icon.svg`）
+2. 放入入口脚本/资源（例如 `main.js`；可选 `icon.svg`/`icon.png`）
 3. 编写 `manifest.json`
 4. 运行 `tools/update_manifest_files.py` 或 `tools/update_manifest_files.ps1` 生成/更新 `files[].sha256`
 5. 更新 `registry.json`（给网页展示与 App 查版本用）
