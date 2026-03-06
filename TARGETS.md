@@ -16,8 +16,8 @@
 
 - **PC**：`plugins/example.pc.demo/1.0.0/`
   - `pages`：`/plugin/example.pc.demo/home`
-  - `slots`：`detail.sections.bottom`、`player.appbar.trailing`
-  - 重点：更高信息密度布局（双栏）、鼠标/键盘操作、窗口尺寸变化
+  - `slots`：`home.feed.beforeSections`、`detail.sections.bottom`、`player.appbar.trailing`
+  - 重点：更高信息密度布局（双栏）、鼠标/键盘操作、窗口尺寸变化；以及 `pages.entry` 在 PC 顶栏一级入口的展示（可选）
 
 ## 宿主适配清单
 
@@ -47,4 +47,3 @@
 - **Resize**：窗口尺寸变化时布局不崩（`row`/`column` 自适应）
 - **鼠标体验**：hover/tooltip（如有）不影响基础可用；滚轮/滚动条行为符合桌面预期
 - **键盘**：如支持 Tab 焦点/快捷键，确保插件 UI 不会拦截宿主关键快捷键（v1 可先不做）
-
