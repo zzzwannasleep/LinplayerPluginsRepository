@@ -1,6 +1,6 @@
 {
     "schemaVersion":  1,
-    "updatedAt":  "2026-03-05T13:18:00Z",
+    "updatedAt":  "2026-03-06T00:00:00Z",
     "plugins":  [
                     {
                         "id":  "example.hello",
@@ -25,6 +25,78 @@
                                              "apiVersion":  1,
                                              "minHostVersion":  "0.0.1",
                                              "manifestUrl":  "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/example.hello/1.0.0/manifest.json"
+                                         }
+                                     ]
+                    },
+                    {
+                        "id":  "example.tv.demo",
+                        "name":  "TV Demo Plugin",
+                        "description":  "演示：TV 端 Focus + slots（Home/Player）",
+                        "author":  {
+                                       "name":  "Example"
+                                   },
+                        "tags":  [
+                                     "demo",
+                                     "tv"
+                                 ],
+                        "targets":  [
+                                        "tv"
+                                    ],
+                        "versions":  [
+                                         {
+                                             "version":  "1.0.0",
+                                             "channel":  "stable",
+                                             "apiVersion":  1,
+                                             "minHostVersion":  "0.0.1",
+                                             "manifestUrl":  "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/example.tv.demo/1.0.0/manifest.json"
+                                         }
+                                     ]
+                    },
+                    {
+                        "id":  "example.mobile.demo",
+                        "name":  "Mobile Demo Plugin",
+                        "description":  "演示：移动端页面 + slots（Home/Detail）",
+                        "author":  {
+                                       "name":  "Example"
+                                   },
+                        "tags":  [
+                                     "demo",
+                                     "mobile"
+                                 ],
+                        "targets":  [
+                                        "mobile"
+                                    ],
+                        "versions":  [
+                                         {
+                                             "version":  "1.0.0",
+                                             "channel":  "stable",
+                                             "apiVersion":  1,
+                                             "minHostVersion":  "0.0.1",
+                                             "manifestUrl":  "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/example.mobile.demo/1.0.0/manifest.json"
+                                         }
+                                     ]
+                    },
+                    {
+                        "id":  "example.pc.demo",
+                        "name":  "PC Demo Plugin",
+                        "description":  "演示：PC 端双栏布局 + slots（Detail/Player）",
+                        "author":  {
+                                       "name":  "Example"
+                                   },
+                        "tags":  [
+                                     "demo",
+                                     "pc"
+                                 ],
+                        "targets":  [
+                                        "pc"
+                                    ],
+                        "versions":  [
+                                         {
+                                             "version":  "1.0.0",
+                                             "channel":  "stable",
+                                             "apiVersion":  1,
+                                             "minHostVersion":  "0.0.1",
+                                             "manifestUrl":  "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/example.pc.demo/1.0.0/manifest.json"
                                          }
                                      ]
                     }

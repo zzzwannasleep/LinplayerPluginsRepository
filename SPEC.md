@@ -59,6 +59,23 @@ https://raw.githubusercontent.com/<owner>/<repo>/<ref>/plugins/<pluginId>/<versi
 - 宿主在安装前与启动时定期拉取 `blocked.json`
 - 命中规则时：禁止安装 / 自动停用，并展示原因（如有）
 
+说明（为什么不只“删掉插件文件”）：
+- `blocked.json` 是 **kill switch**：用于紧急禁用“已安装在用户设备上”的插件或某个版本
+- 仅在仓库里删除插件目录/文件，或仅从 `registry.json` 移除展示（下架），都**不能可靠阻止**已安装插件继续运行：
+  - 插件脚本/资源可能已下载到本地（离线也能被加载）
+  - 本规范强烈建议安装链接使用 tag/commit SHA；即使从 `main` 删除，历史版本仍可能被访问/复用
+  - CDN/缓存/镜像/分叉仓库可能继续提供旧内容
+
+治理建议：区分三种动作（可同时发生）：
+- **下架（Delist）**：从 `registry.json` 移除/隐藏，阻止新用户发现与安装
+- **禁用（Block）**：写入 `blocked.json`（按 `id` 或 `id+version`），阻止安装并让已安装自动停用
+- **删除文件（Delete）**：可作为清理手段，但不能替代 `blocked.json`
+
+推荐处置流程（MVP）：
+1. 先在 `blocked.json` 里封禁（尽快生效）
+2. 同时从 `registry.json` 下架（减少新增安装）
+3. 视情况再删除插件目录/资源，并在 `blocked.json` 保留封禁记录一段时间
+
 ### 4.3 最小权限（建议）
 
 本期需求仅开放网络权限，但建议仍采用「能力型 API」：
