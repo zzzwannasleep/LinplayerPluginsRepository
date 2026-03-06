@@ -17,7 +17,7 @@
 - **PC**：`plugins/example.pc.demo/1.0.0/`
   - `pages`：`/plugin/example.pc.demo/home`
   - `slots`：`home.feed.beforeSections`、`detail.sections.bottom`、`player.appbar.trailing`
-  - 重点：更高信息密度布局（双栏）、鼠标/键盘操作、窗口尺寸变化；以及 `pages.entry` 在 PC 顶栏一级入口的展示（可选）
+  - 重点：更高信息密度布局（双栏）、鼠标/键盘操作、窗口尺寸变化；以及 `pages.entry=true` 在首页顶栏（`主页` / `喜欢`）旁展示为「示例」入口（宿主可选实现）
 
 ## 宿主适配清单
 

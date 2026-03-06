@@ -2,7 +2,7 @@
     "schemaVersion":  1,
     "id":  "example.pc.demo",
     "name":  "PC Demo Plugin",
-    "description":  "演示：PC 端双栏布局 + 顶栏入口（可选） + slots（Home/Detail/Player）",
+    "description":  "演示：PC 端双栏布局 + 顶部入口（entry）+ pages + slots（Home/Detail/Player）",
     "version":  "1.0.0",
     "apiVersion":  1,
     "minHostVersion":  "0.0.1",
@@ -30,8 +30,8 @@
                   },
                   {
                       "path":  "main.js",
-                      "size":  6459,
-                      "sha256":  "04fae17e17872679b5d62d7b8972758fbb62a66a77441d004d24791625afdff4"
+                      "size":  6780,
+                      "sha256":  "30c8602fe4a7b3684d92c85f80210cfac4b1c2c91ea5b8b1c2aac06810868118"
                   }
               ],
     "contributions":  {

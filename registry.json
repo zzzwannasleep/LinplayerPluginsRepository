@@ -79,7 +79,7 @@
                     {
                         "id":  "example.pc.demo",
                         "name":  "PC Demo Plugin",
-                        "description":  "演示：PC 端双栏布局 + 顶栏入口（可选） + slots（Home/Detail/Player）",
+                        "description":  "演示：PC 端双栏布局 + 顶部入口（entry）+ pages + slots（Home/Detail/Player）",
                         "author":  {
                                        "name":  "Example"
                                    },
