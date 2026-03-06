@@ -19,10 +19,7 @@
               },
     "permissions":  {
                         "network":  {
-                                        "enabled":  false,
-                                        "domains":  [
-                                                        "*"
-                                                    ]
+                                        "enabled":  false
                                     }
                     },
     "files":  [

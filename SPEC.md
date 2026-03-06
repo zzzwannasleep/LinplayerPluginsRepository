@@ -96,7 +96,7 @@ https://raw.githubusercontent.com/<owner>/<repo>/<ref>/plugins/<pluginId>/<versi
 - `minHostVersion`：最低宿主版本（SemVer）
 - `targets`：支持端列表（`tv`/`mobile`/`pc`）
 - `entry`：各端入口脚本
-- `permissions`：权限声明（v1 至少 `network`）
+- `permissions`：权限声明（v1 仅定义 `network`；如需网络能力需显式声明）
 - `files`：文件清单（含 sha256）
 
 可选字段：
@@ -137,8 +137,18 @@ v1 仅定义网络权限：
 }
 ```
 
-- `domains`：允许访问的域名白名单；`"*"` 表示不限制（你当前倾向）
+- `enabled`：是否允许插件使用 `ctx.net.request()`（未声明 `permissions.network` 或 `enabled: false` 时，宿主必须拒绝该能力；建议让 `ctx.net.request()` 抛错/返回权限错误）
+- `domains`：当 `enabled: true` 时必填；允许访问的域名白名单；`"*"` 表示不限制（你当前倾向）
 - 宿主仍应做：超时、并发限制、最大响应大小
+
+仅做 UI/卡片类插件（不需要网络）示例：
+```json
+{
+  "permissions": {
+    "network": { "enabled": false }
+  }
+}
+```
 
 ### 5.4 files（文件清单）
 
@@ -382,7 +392,7 @@ v1 MVP SlotId（先覆盖：首页 / 详情页 / 播放页）：
 - `ctx.hostVersion`：宿主版本
 - `ctx.plugin`：`{ id, version }`
 - `ctx.settings`：插件设置（由宿主持久化）
-- `ctx.net.request(req)`：网络请求能力
+- `ctx.net.request(req)`：网络请求能力（仅当 `permissions.network.enabled: true` 时可用；否则宿主应拒绝/抛错）
 - `ctx.storage.get/set/remove`：插件私有 KV 存储
 - `ctx.log(level, message, extra?)`：日志
 

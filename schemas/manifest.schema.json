@@ -66,21 +66,28 @@
     "permissions": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["network"],
       "properties": {
         "network": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["enabled", "domains"],
+          "required": ["enabled"],
           "properties": {
             "enabled": { "type": "boolean" },
             "domains": {
               "type": "array",
-              "minItems": 1,
               "items": { "type": "string", "minLength": 1, "maxLength": 255 },
               "maxItems": 200
             }
-          }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "enabled": { "const": true } } },
+              "then": {
+                "required": ["domains"],
+                "properties": { "domains": { "minItems": 1 } }
+              }
+            }
+          ]
         }
       }
     },
