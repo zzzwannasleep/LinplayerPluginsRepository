@@ -95,6 +95,7 @@
       "additionalProperties": false,
       "properties": {
         "pages": { "type": "array", "items": { "$ref": "#/$defs/pageContribution" }, "maxItems": 200 },
+        "slots": { "type": "array", "items": { "$ref": "#/$defs/slotContribution" }, "maxItems": 200 },
         "dataSources": { "type": "array", "items": { "$ref": "#/$defs/dataSourceContribution" }, "maxItems": 200 },
         "playSources": { "type": "array", "items": { "$ref": "#/$defs/playSourceContribution" }, "maxItems": 200 },
         "tasks": { "type": "array", "items": { "$ref": "#/$defs/taskContribution" }, "maxItems": 200 },
@@ -174,9 +175,26 @@
         "id": { "type": "string", "minLength": 1, "maxLength": 80 },
         "title": { "type": "string", "minLength": 1, "maxLength": 80 },
         "route": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "icon": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "order": { "type": "integer" },
+        "entry": { "type": "boolean" },
         "targets": { "type": "array", "items": { "type": "string", "enum": ["tv", "mobile", "pc"] }, "uniqueItems": true },
         "render": { "type": "string", "minLength": 1, "maxLength": 120 },
         "onEvent": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "slotContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "slotId", "render"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "slotId": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "targets": { "type": "array", "items": { "type": "string", "enum": ["tv", "mobile", "pc"] }, "uniqueItems": true },
+        "render": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "onEvent": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "priority": { "type": "integer" }
       }
     },
     "dataSourceContribution": {

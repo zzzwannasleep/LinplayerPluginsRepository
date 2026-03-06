@@ -36,8 +36,8 @@
     "files":  [
                   {
                       "path":  "main.js",
-                      "size":  1894,
-                      "sha256":  "60da12c122079244bbb649d56d8ea2cde58914cec9b1682710ecb9fdc835aee9"
+                      "size":  5914,
+                      "sha256":  "4f302a04c8aad6885dcd37e9feabbfdde7017e841d1793e134042a1f72b9ef62"
                   }
               ],
     "contributions":  {
@@ -52,7 +52,50 @@
                                                             "pc"
                                                         ],
                                             "render":  "page_home_render",
-                                            "onEvent":  "page_home_onEvent"
+                                            "onEvent":  "page_home_onEvent",
+                                            "order":  0,
+                                            "entry":  true
+                                        }
+                                    ],
+                          "slots":  [
+                                        {
+                                            "id":  "hello_home",
+                                            "title":  "Home Hello",
+                                            "slotId":  "home.feed.beforeSections",
+                                            "targets":  [
+                                                            "tv",
+                                                            "mobile",
+                                                            "pc"
+                                                        ],
+                                            "render":  "slot_home_render",
+                                            "onEvent":  "slot_home_onEvent",
+                                            "priority":  0
+                                        },
+                                        {
+                                            "id":  "hello_detail_actions",
+                                            "title":  "Detail Hello",
+                                            "slotId":  "detail.hero.actions",
+                                            "targets":  [
+                                                            "tv",
+                                                            "mobile",
+                                                            "pc"
+                                                        ],
+                                            "render":  "slot_detail_actions_render",
+                                            "onEvent":  "slot_detail_actions_onEvent",
+                                            "priority":  0
+                                        },
+                                        {
+                                            "id":  "hello_player_actions",
+                                            "title":  "Player Hello",
+                                            "slotId":  "player.appbar.trailing",
+                                            "targets":  [
+                                                            "tv",
+                                                            "mobile",
+                                                            "pc"
+                                                        ],
+                                            "render":  "slot_player_appbar_render",
+                                            "onEvent":  "slot_player_appbar_onEvent",
+                                            "priority":  0
                                         }
                                     ]
                       }

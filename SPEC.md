@@ -144,6 +144,7 @@ v1 仅定义网络权限：
 
 `contributions` 用于告诉宿主“这个插件能提供什么”。v1 支持：
 - `pages`：新增页面（宿主渲染 UI Schema）
+- `slots`：向宿主内置页面注入内容（首页/详情/播放页等的插槽扩展点）
 - `dataSources`：数据源（搜索/列表/详情）
 - `playSources`：播放源解析（返回可播放 URL/headers/字幕等）
 - `tasks`：自动化任务（触发器 + run）
@@ -151,7 +152,7 @@ v1 仅定义网络权限：
 
 所有 handler 都是**入口脚本中定义的全局函数名**（字符串）。宿主通过脚本引擎调用这些函数。
 
-#### 5.5.1 pages
+#### 5.5.1 pages（插件自有页面）
 
 ```json
 {
@@ -168,8 +169,22 @@ v1 仅定义网络权限：
 }
 ```
 
-- `render(ctx, params, state)` -> `PageRenderResult`
-- `onEvent(ctx, event, state)` -> `PageEventResult`
+字段约定：
+- `id`：页面唯一 ID（插件内唯一）
+- `title`：页面标题（用于展示/入口）
+- `route`：路由（建议以 `/plugin/` 开头；宿主用于注册导航入口）
+- `targets`：可选；不填则默认等于 manifest 的 `targets`
+- `render`：渲染函数名
+- `onEvent`：可选；事件处理函数名
+
+可选字段（仅影响“插件中心/入口列表”的展示，不影响路由能力）：
+- `icon`：图标文件路径（相对插件版本目录，如 `icon.png`/`icon.svg`）；**必须加入 `files[]`** 才能被宿主下载与校验
+- `order`：排序（数字越小越靠前；默认 `0`）
+- `entry`：是否作为推荐入口（默认 `false`；宿主可用于置顶/高亮）
+
+宿主入口展示约定（MVP 建议写死，避免插件作者“不知道页面在哪里出现”）：
+- **TV**：宿主提供一个顶层 Tab：`插件`（与 TMDB/Bangumi 同级），列出所有已安装插件的 `pages`（按 `order` / `title` 排序），点击进入对应 `route`
+- **Mobile/PC**：宿主提供一个“插件中心”页面（可放在设置里或首页入口），同样列出所有 `pages`；可优先展示 `entry: true` 的页面
 
 #### 5.5.2 dataSources
 
@@ -232,6 +247,87 @@ v1 仅定义网络权限：
 
 - 插件通过返回 `type: "plugin.ratingBadge"` 的节点复用该组件
 - 宿主必须维护组件白名单（尤其 TV 端）
+
+#### 5.5.6 slots（往宿主页面“加东西”）
+
+用途：插件向宿主内置页面（如 首页 / 详情页 / 播放页）注册**插槽贡献**，宿主在指定 `slotId` 的位置渲染插件返回的 UI Schema。
+
+Manifest 结构：
+```json
+{
+  "contributions": {
+    "slots": [
+      {
+        "id": "home_banner",
+        "title": "首页横幅",
+        "slotId": "home.feed.beforeSections",
+        "targets": ["tv", "mobile", "pc"],
+        "render": "slot_home_render",
+        "onEvent": "slot_home_onEvent",
+        "priority": 0
+      }
+    ]
+  }
+}
+```
+
+调用约定（复用 `pages` 的返回体最省事）：
+- `render(ctx, params, state)` -> `PageRenderResult`（宿主仅使用 `schema/state`，`title` 可忽略）
+- `onEvent(ctx, event, state)` -> `PageEventResult`
+
+合并/治理约定（建议写死，宿主必须实现）：
+- 同一个 `slotId` 可有多个贡献；宿主按 `priority` **降序**渲染（默认 `0`）
+- 宿主对每个 `slotId` 限制最多渲染 **N 个**（建议 `6` 个），其余忽略（避免占满页面/影响性能）
+- 宿主必须对白名单 `actions` 做过滤（沿用 `toast` / `navigate`）；不支持的 action 直接忽略
+
+v1 MVP SlotId（先覆盖：首页 / 详情页 / 播放页）：
+
+**A. 首页（Home）**
+- `home.feed.beforeSections`
+  - 放置点：继续观看/快捷入口之后、服务器推荐分区（sections）之前
+  - `params`：`{ "placement": "home" }`
+  - 期望 schema：`card` / `column` / `row`（用于“插件入口卡片、活动横幅、快捷按钮”）
+- `home.feed.afterSections`
+  - 放置点：所有 sections 之后、页面底部（统计/版权信息等）之前或最底部
+  - `params`：`{ "placement": "home" }`
+
+**B. 详情页（Detail / ShowDetail）**
+- `detail.hero.actions`
+  - 放置点：播放/收藏/更多那排按钮附近
+  - `params`（建议字段固定，避免宿主/插件各玩各的）：
+    ```json
+    {
+      "placement": "detail",
+      "media": {
+        "id": "xxx",
+        "type": "Movie|Series",
+        "title": "xxx",
+        "year": 2024,
+        "providerIds": { "tmdb": "", "imdb": "", "trakt": "" }
+      }
+    }
+    ```
+  - 期望 schema：`row`（少量按钮/徽章）
+- `detail.sections.bottom`
+  - 放置点：详情页底部额外信息区（例如在“外部链接/演员/剧集信息”之后）
+  - `params`：同上
+  - 期望 schema：`column`（信息卡片、额外分区）
+
+**C. 播放页（Player）**
+- `player.appbar.trailing`
+  - 放置点：播放器 AppBar 右侧 actions（图标按钮区）
+  - `params`：
+    ```json
+    {
+      "placement": "player",
+      "playback": { "title": "", "itemId": "?", "positionMs": 123000, "durationMs": 456000 }
+    }
+    ```
+  - 期望 schema：`row`（建议 1–3 个 `iconButton` / 按钮）
+- `player.overlay.bottom`（可选但很有用）
+  - 放置点：播放器控制层底部区域（不想挤 AppBar 的时候用）
+  - `params`：同上
+  - 期望 schema：`row` / `column`
 
 ### 5.6 settingsSchema（插件设置表单 DSL）
 
@@ -318,7 +414,8 @@ v1 推荐使用“组件树 + props + children”：
 - 布局：`page`、`column`、`row`、`list`、`grid`、`card`、`divider`、`spacer`
 - 文本：`text`、`markdown`
 - 图片：`image`
-- 交互：`button`、`textField`、`select`、`switch`
+- 交互：`button`、`iconButton`、`textField`、`select`、`switch`
+- 标签：`chip`、`badge`
 - 状态：`loading`、`empty`、`error`
 
 ### 7.2 TV 端 Focus 约定（建议预留字段）
@@ -328,6 +425,15 @@ v1 推荐使用“组件树 + props + children”：
 - `focusNext`：`{ up, down, left, right }` 指向其他 `focusId`
 
 宿主也可按布局自动推导，但建议字段保留以便复杂页面可控。
+
+### 7.3 slots MVP 推荐补充组件（更“原生”）
+
+为让插件在 首页/详情/播放页 的插槽里“像原生一样”，建议宿主在 v1 内置以下两个组件（比让作者用 `button + text` 硬拼稳定很多，TV 焦点也更好处理）：
+
+- `iconButton`：用于 `player.appbar.trailing` 这类区域  
+  `props` 建议：`{ "icon": "xxx", "tooltip": "xxx?", "event": { "name": "xxx", "payload": {} } }`
+- `chip` / `badge`：用于详情页/卡片的小标签  
+  `props` 建议：`{ "text": "xxx", "event": { "name": "xxx", "payload": {} }? }`
 
 ## 8. 返回结构（建议）
 
@@ -372,4 +478,3 @@ actions 由宿主实现白名单（避免插件执行任意原生能力）。
 ## 11. 示例
 
 参考：`plugins/example.hello/1.0.0/manifest.json` 与 `plugins/example.hello/1.0.0/main.js`。
-
