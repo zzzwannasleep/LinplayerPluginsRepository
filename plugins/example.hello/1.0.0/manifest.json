@@ -1,23 +1,19 @@
 {
     "schemaVersion":  1,
     "id":  "example.hello",
-    "name":  "Hello Plugin",
-    "description":  "演示：页面 + 事件 + 网络请求（通过 ctx.net.request）",
+    "name":  "Network Example Plugin",
+    "description":  "演示：最小网络请求 + 错误处理 + openUrl",
     "version":  "1.0.0",
     "apiVersion":  1,
-    "minHostVersion":  "0.0.1",
+    "minHostVersion":  "1.0.0",
     "author":  {
                    "name":  "Example"
                },
     "targets":  [
-                    "tv",
                     "mobile",
                     "pc"
                 ],
     "entry":  {
-                  "tv":  {
-                             "script":  "main.js"
-                         },
                   "mobile":  {
                                  "script":  "main.js"
                              },
@@ -29,25 +25,24 @@
                         "network":  {
                                         "enabled":  true,
                                         "domains":  [
-                                                        "*"
+                                                        "httpbin.org"
                                                     ]
                                     }
                     },
     "files":  [
                   {
                       "path":  "main.js",
-                      "size":  5914,
-                      "sha256":  "4f302a04c8aad6885dcd37e9feabbfdde7017e841d1793e134042a1f72b9ef62"
+                      "size":  4378,
+                      "sha256":  "528f2a0be482c3b3f1066944f96d3d5b7fa0953e8dc497e5d08a2b222d81a612"
                   }
               ],
     "contributions":  {
                           "pages":  [
                                         {
                                             "id":  "home",
-                                            "title":  "Hello Plugin",
+                                            "title":  "Network Example",
                                             "route":  "/plugin/example.hello/home",
                                             "targets":  [
-                                                            "tv",
                                                             "mobile",
                                                             "pc"
                                                         ],
@@ -55,47 +50,6 @@
                                             "onEvent":  "page_home_onEvent",
                                             "order":  0,
                                             "entry":  true
-                                        }
-                                    ],
-                          "slots":  [
-                                        {
-                                            "id":  "hello_home",
-                                            "title":  "Home Hello",
-                                            "slotId":  "home.feed.beforeSections",
-                                            "targets":  [
-                                                            "tv",
-                                                            "mobile",
-                                                            "pc"
-                                                        ],
-                                            "render":  "slot_home_render",
-                                            "onEvent":  "slot_home_onEvent",
-                                            "priority":  0
-                                        },
-                                        {
-                                            "id":  "hello_detail_actions",
-                                            "title":  "Detail Hello",
-                                            "slotId":  "detail.hero.actions",
-                                            "targets":  [
-                                                            "tv",
-                                                            "mobile",
-                                                            "pc"
-                                                        ],
-                                            "render":  "slot_detail_actions_render",
-                                            "onEvent":  "slot_detail_actions_onEvent",
-                                            "priority":  0
-                                        },
-                                        {
-                                            "id":  "hello_player_actions",
-                                            "title":  "Player Hello",
-                                            "slotId":  "player.appbar.trailing",
-                                            "targets":  [
-                                                            "tv",
-                                                            "mobile",
-                                                            "pc"
-                                                        ],
-                                            "render":  "slot_player_appbar_render",
-                                            "onEvent":  "slot_player_appbar_onEvent",
-                                            "priority":  0
                                         }
                                     ]
                       }

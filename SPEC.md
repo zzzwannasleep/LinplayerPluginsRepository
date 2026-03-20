@@ -84,7 +84,7 @@ V1 推荐两类能力：
 
 - `plugins/example.quickstart/1.0.0/`
 
-如果你还想看一个带网络请求的例子，可以再看：
+如果你还想看一个只聚焦网络请求的例子，可以再看：
 
 - `plugins/example.hello/1.0.0/`
 
@@ -637,9 +637,7 @@ python tools/validate_repo.py
 仓库里的示例插件可以这样看：
 
 - `plugins/example.quickstart/1.0.0/`：最小教程型示例，适合第一次照着写
-- `plugins/example.hello/1.0.0/`：页面、事件、网络请求
-- `plugins/example.pc.demo/1.0.0/`：PC 布局和入口示例
-- `plugins/example.mobile.demo/1.0.0/`：移动端布局和 slot 示例
+- `plugins/example.hello/1.0.0/`：最小网络请求示例
 - `plugins/example.tv.demo/1.0.0/`：TV 端专用示例
 
 如果你只看一个例子，优先看 `example.quickstart`。

@@ -9,13 +9,14 @@
 1. 先读 `SPEC.md`
 2. 再看 `plugins/example.quickstart/1.0.0/`
 3. 需要网络请求示例时，再看 `plugins/example.hello/1.0.0/`
-4. 需要分端示例时，再看 `example.pc.demo`、`example.mobile.demo`、`example.tv.demo`
+4. 如果你确实要做 TV，再看 `plugins/example.tv.demo/1.0.0/`
 
 说明：
 
 - `SPEC.md` 是当前更适合直接阅读和照着做的 V1 规范
 - `PLUGIN_SPEC_V1.md` 保留为更细的草案文档
 - `example.quickstart` 是最小教程型示例，适合直接照抄结构起步
+- `example.hello` 是纯网络请求示例
 
 ## 仓库里有什么
 
