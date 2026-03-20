@@ -1,13 +1,20 @@
 /* depends on assets/market.css */
 
+body{
+  background: var(--bg) !important;
+}
+
 .doc{
   padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .doc__bar{
   display:grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  gap: 14px;
+  gap: 24px;
 }
 
 .doc__left{
@@ -27,6 +34,7 @@
 
 .doc__right{
   padding: 14px 14px 18px 14px;
+  background: transparent;
 }
 
 .doc__status{
