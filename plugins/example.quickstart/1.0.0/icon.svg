@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Quickstart Plugin">
+  <rect width="128" height="128" rx="24" fill="#182432" />
+  <rect x="18" y="18" width="92" height="92" rx="18" fill="#f6f3e8" />
+  <path d="M40 46h48v8H40zm0 18h30v8H40zm0 18h48v8H40z" fill="#182432" />
+  <circle cx="92" cy="68" r="12" fill="#e56b2f" />
+</svg>

@@ -1,0 +1,85 @@
+{
+    "schemaVersion":  1,
+    "id":  "example.quickstart",
+    "name":  "Quickstart Plugin",
+    "description":  "教程型示例：最小页面 + 插槽 + 事件交互",
+    "version":  "1.0.0",
+    "apiVersion":  1,
+    "minHostVersion":  "1.0.0",
+    "author":  {
+                   "name":  "Example"
+               },
+    "targets":  [
+                    "pc",
+                    "mobile"
+                ],
+    "entry":  {
+                  "pc":  {
+                             "script":  "main.js"
+                         },
+                  "mobile":  {
+                                 "script":  "main.js"
+                             }
+              },
+    "permissions":  {
+                        "network":  {
+                                        "enabled":  false
+                                    }
+                    },
+    "files":  [
+                  {
+                      "path":  "icon.svg",
+                      "size":  367,
+                      "sha256":  "388553b180d1ee9c28fa0f8faf56ccb0375da9f983bf0566dd20565f7b0e331e"
+                  },
+                  {
+                      "path":  "main.js",
+                      "size":  5157,
+                      "sha256":  "29d449ceb415ffeccb9de90a9b8462b1a33ed72415a75c8fcb2f80b766ea0773"
+                  }
+              ],
+    "contributions":  {
+                          "pages":  [
+                                        {
+                                            "id":  "home",
+                                            "title":  "Quickstart",
+                                            "route":  "/plugin/example.quickstart/home",
+                                            "targets":  [
+                                                            "pc",
+                                                            "mobile"
+                                                        ],
+                                            "render":  "page_home_render",
+                                            "onEvent":  "page_home_onEvent",
+                                            "icon":  "icon.svg",
+                                            "order":  0,
+                                            "entry":  true
+                                        }
+                                    ],
+                          "slots":  [
+                                        {
+                                            "id":  "quickstart_home",
+                                            "title":  "Quickstart Home Card",
+                                            "slotId":  "home.feed.beforeSections",
+                                            "targets":  [
+                                                            "pc",
+                                                            "mobile"
+                                                        ],
+                                            "render":  "slot_home_render",
+                                            "onEvent":  "slot_home_onEvent",
+                                            "priority":  0
+                                        },
+                                        {
+                                            "id":  "quickstart_detail_actions",
+                                            "title":  "Quickstart Detail Actions",
+                                            "slotId":  "detail.hero.actions",
+                                            "targets":  [
+                                                            "pc",
+                                                            "mobile"
+                                                        ],
+                                            "render":  "slot_detail_actions_render",
+                                            "onEvent":  "slot_detail_actions_onEvent",
+                                            "priority":  0
+                                        }
+                                    ]
+                      }
+}

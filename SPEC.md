@@ -1,295 +1,177 @@
-# 插件市场与脚本插件规范（v1）
+# LinPlayer 插件规范（V1，阅读版）
 
-本规范用于「**脚本插件 + 宿主渲染（DSL/UI Schema）**」的插件体系，支持 Flutter 全端（TV/移动/PC）共用协议，市场按端分发。
+> 本文是面向插件作者的阅读版规范，重点回答两个问题：
+> 1. V1 插件到底应该怎么做
+> 2. `manifest.json` 和 `main.js` 分别负责什么
+>
+> 更细的草案与设计讨论见 `PLUGIN_SPEC_V1.md`。
 
-## 1. 术语
+## 1. 先理解 V1 插件是什么
 
-- **宿主（Host/App）**：你的 Flutter 应用本体，负责 UI 渲染、播放器、网络能力、存储、调度等。
-- **插件仓库（Market Repo）**：独立 GitHub 仓库，存放插件文件与索引。
-- **插件（Plugin）**：一个 `pluginId` 下的一个或多个版本。
-- **版本（Version）**：语义化版本（SemVer），例如 `1.2.3`。
-- **目标端（target）**：`tv` / `mobile` / `pc`。
-- **Manifest**：插件清单文件 `manifest.json`，描述入口、权限、扩展点、文件哈希等。
-- **Registry**：市场索引 `registry.json`，用于网页展示与客户端查更新。
-- **Blocked**：下架/禁用清单 `blocked.json`，用于 kill switch。
-- **UI Schema / DSL**：插件返回的声明式 UI 描述，宿主将其渲染为 Flutter Widgets。
+LinPlayer 的 V1 插件不是“往 App 里塞一个网页”，也不是“直接注入原生控件”。
 
-## 2. 仓库结构（推荐）
+V1 的核心模型只有一句话：
+
+**插件返回结构化数据和结构化 UI，宿主负责渲染、导航、Toast、打开链接和网络能力。**
+
+这意味着：
+
+- 插件作者主要写 `manifest.json` 和 `main.js`
+- `main.js` 里写的是 render / onEvent 函数
+- 页面长什么样，不是你直接画 Flutter，而是返回一棵 UI Schema
+- 插件如果要请求网络，不是自己直接起 socket，而是调用 `ctx.net.request()`
+
+当前阅读版规范优先描述 `pc` 和 `mobile` 两端。
+
+- `tv` 相关字段仍然保留在 schema 和示例里
+- 但它不是本文重点，也不是当前推荐的 V1 开发主线
+
+另外，仓库里的 schema 仍保留了 `dataSources`、`playSources`、`tasks`、`uiComponents` 等扩展字段。
+
+- 这些字段可以视为预留能力
+- 当前推荐你只使用 `pages` 和 `slots`
+- 如果你要做社区插件，优先走这条主路径
+
+## 2. V1 插件能做什么，不能做什么
+
+### 2.1 可以做什么
+
+V1 推荐两类能力：
+
+- 提供一个或多个插件页面
+- 在宿主预留的插槽位置插入卡片、按钮或摘要信息
+
+典型场景：
+
+- 做一个资讯页、导航页、工具页
+- 在首页插入一张推荐卡片
+- 在详情页操作区加一个按钮
+- 在播放器右上角加一个轻量工具按钮
+
+### 2.2 当前不要做什么
+
+下面这些能力不属于当前主线 V1：
+
+- 直接注入任意 Flutter Widget
+- 直接注入原生平台控件
+- 以完整 WebView 作为主要展示方式
+- 后台常驻任务
+- 接管宿主首页
+- 改写宿主数据库
+- 复杂播放源解析链路
+
+如果你的需求本质上是“抓一个网页，然后原样塞进 App”，那不是当前规范鼓励的方向。
+
+推荐做法是：
+
+1. 请求远程数据
+2. 解析和标准化数据
+3. 返回宿主可渲染的卡片、列表、按钮和文本
+
+## 3. 做一个插件的最短路径
+
+如果你只是想尽快做出第一个插件，按下面顺序做就够了：
+
+1. 新建目录 `plugins/<pluginId>/<version>/`
+2. 写 `manifest.json`
+3. 写 `main.js`
+4. 在 `contributions.pages` 里注册页面
+5. 如果要往宿主页面加入口，再写 `contributions.slots`
+6. 运行 `tools/update_manifest_files.py` 更新 `files[].size` 和 `files[].sha256`
+7. 如果你希望它出现在市场页，再更新 `registry.json`
+
+仓库里已经放了一个教程型示例：
+
+- `plugins/example.quickstart/1.0.0/`
+
+如果你还想看一个带网络请求的例子，可以再看：
+
+- `plugins/example.hello/1.0.0/`
+
+## 4. 目录结构
+
+一个最小插件目录长这样：
 
 ```text
-.
-├─ registry.json
-├─ blocked.json
-├─ schemas/
-└─ plugins/
-   └─ <pluginId>/
-      └─ <version>/
-         ├─ manifest.json
-         └─ main.js
+plugins/<pluginId>/<version>/
+  manifest.json
+  main.js
+  icon.svg
+  README.md
 ```
 
-说明：
-- 一个插件一个文件夹（`plugins/<pluginId>/`）
-- 每个版本一个子目录（`plugins/<pluginId>/<version>/`）
-- 不使用 GitHub Releases 打包：宿主按 `manifest.json` 的 `files[]` 列表逐个下载文件
-- 图标可选：如需在市场页展示，可在版本目录放入 `icon.svg` 或 `icon.png`，并把它们加入 `files[]`
+最小必需文件：
 
-## 3. 安装链接（复制到 App）
+- `manifest.json`
+- `main.js`
 
-安装链接必须指向某个版本目录下的 `manifest.json`（GitHub Raw 链接）：
+推荐附加文件：
 
-```text
-https://raw.githubusercontent.com/<owner>/<repo>/<ref>/plugins/<pluginId>/<version>/manifest.json
-```
+- `icon.svg` 或 `icon.png`
+- `README.md`
 
-**强烈建议 `<ref>` 使用 tag 或 commit SHA**（不可变），不要使用 `main`。
+建议：
 
-原因：如果链接可变，攻击者可同时篡改脚本与 `manifest.json` 里的 `sha256`，绕过完整性校验。
+- `pluginId` 保持长期稳定，不要跟着版本变化
+- `version` 使用 SemVer，例如 `1.0.0`
+- 一个版本一个目录，不要覆盖旧版本文件
 
-## 4. 安全与治理（最低要求）
+## 5. `manifest.json` 怎么写
 
-### 4.1 完整性校验（必须）
-
-- `manifest.json` 必须包含 `files[]`，每个文件包含 `path/size/sha256`
-- 宿主必须在安装/升级时对每个文件做 `sha256` 校验，不通过则失败
-
-### 4.2 下架/禁用（必须）
-
-- 插件仓库根目录提供 `blocked.json`
-- 宿主在安装前与启动时定期拉取 `blocked.json`
-- 命中规则时：禁止安装 / 自动停用，并展示原因（如有）
-
-说明（为什么不只“删掉插件文件”）：
-- `blocked.json` 是 **kill switch**：用于紧急禁用“已安装在用户设备上”的插件或某个版本
-- 仅在仓库里删除插件目录/文件，或仅从 `registry.json` 移除展示（下架），都**不能可靠阻止**已安装插件继续运行：
-  - 插件脚本/资源可能已下载到本地（离线也能被加载）
-  - 本规范强烈建议安装链接使用 tag/commit SHA；即使从 `main` 删除，历史版本仍可能被访问/复用
-  - CDN/缓存/镜像/分叉仓库可能继续提供旧内容
-
-治理建议：区分三种动作（可同时发生）：
-- **下架（Delist）**：从 `registry.json` 移除/隐藏，阻止新用户发现与安装
-- **禁用（Block）**：写入 `blocked.json`（按 `id` 或 `id+version`），阻止安装并让已安装自动停用
-- **删除文件（Delete）**：可作为清理手段，但不能替代 `blocked.json`
-
-推荐处置流程（MVP）：
-1. 先在 `blocked.json` 里封禁（尽快生效）
-2. 同时从 `registry.json` 下架（减少新增安装）
-3. 视情况再删除插件目录/资源，并在 `blocked.json` 保留封禁记录一段时间
-
-### 4.3 最小权限（建议）
-
-本期需求仅开放网络权限，但建议仍采用「能力型 API」：
-- 插件不能直接拥有 socket/http，而是调用宿主 `net.request()`
-- 插件可完全自定义 `User-Agent` / headers / cookieJar，但宿主仍可做超时/限流/响应大小上限/审计日志
-
-## 5. manifest.json 规范
-
-### 5.1 顶层字段（v1）
-
-必填字段：
-- `schemaVersion`：固定为 `1`
-- `id`：插件唯一 ID（建议反向域名，如 `com.example.plugin`）
-- `name`：展示名
-- `description`：简介
-- `version`：插件版本（SemVer）
-- `apiVersion`：插件 API 版本（整数，v1 固定为 `1`）
-- `minHostVersion`：最低宿主版本（SemVer）
-- `targets`：支持端列表（`tv`/`mobile`/`pc`）
-- `entry`：各端入口脚本
-- `permissions`：权限声明（v1 仅定义 `network`；如需网络能力需显式声明）
-- `files`：文件清单（含 sha256）
-
-可选字段：
-- `author`：`{ name, homepage }`
-- `homepage` / `site`：插件主页
-- `license`：许可证
-- `tags`：标签数组
-- `contributions`：扩展点声明
-- `settingsSchema`：宿主生成插件设置页的表单 DSL
-
-### 5.2 entry（入口）
+### 5.1 你可以先照着这个最小示例写
 
 ```json
 {
+  "schemaVersion": 1,
+  "id": "example.quickstart",
+  "name": "Quickstart Plugin",
+  "description": "教程型示例：最小页面 + 插槽 + 事件交互",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "minHostVersion": "1.0.0",
+  "author": {
+    "name": "Example"
+  },
+  "targets": ["pc", "mobile"],
   "entry": {
-    "tv": { "script": "main.js" },
-    "mobile": { "script": "main.js" },
-    "pc": { "script": "main.js" }
-  }
-}
-```
-
-- `targets` 包含哪个端，`entry` 就必须包含对应 key
-- `script` 必须出现在 `files[].path` 中，并能被下载/校验
-
-### 5.3 permissions（权限）
-
-v1 仅定义网络权限：
-
-```json
-{
-  "permissions": {
-    "network": {
-      "enabled": true,
-      "domains": ["*"]
-    }
-  }
-}
-```
-
-- `enabled`：是否允许插件使用 `ctx.net.request()`（未声明 `permissions.network` 或 `enabled: false` 时，宿主必须拒绝该能力；建议让 `ctx.net.request()` 抛错/返回权限错误）
-- `domains`：当 `enabled: true` 时必填；允许访问的域名白名单；`"*"` 表示不限制（你当前倾向）
-- 宿主仍应做：超时、并发限制、最大响应大小
-
-仅做 UI/卡片类插件（不需要网络）示例：
-```json
-{
+    "pc": { "script": "main.js" },
+    "mobile": { "script": "main.js" }
+  },
   "permissions": {
     "network": { "enabled": false }
-  }
-}
-```
-
-### 5.4 files（文件清单）
-
-```json
-{
+  },
   "files": [
-    { "path": "main.js", "size": 1234, "sha256": "64位十六进制" }
-  ]
-}
-```
-
-说明：图标并非必需；如需在市场页展示，可添加 `icon.svg` 或 `icon.png`，并把它们加入 `files[]`。
-
-规则：
-- `path` 必须是相对路径、使用 `/` 分隔
-- 禁止出现 `..`、绝对路径、盘符
-- `sha256` 小写 64 位十六进制
-
-### 5.5 contributions（扩展点）
-
-`contributions` 用于告诉宿主“这个插件能提供什么”。v1 支持：
-- `pages`：新增页面（宿主渲染 UI Schema）
-- `slots`：向宿主内置页面注入内容（首页/详情/播放页等的插槽扩展点）
-- `dataSources`：数据源（搜索/列表/详情）
-- `playSources`：播放源解析（返回可播放 URL/headers/字幕等）
-- `tasks`：自动化任务（触发器 + run）
-- `uiComponents`：自定义 UI 组件（Schema 级）
-
-所有 handler 都是**入口脚本中定义的全局函数名**（字符串）。宿主通过脚本引擎调用这些函数。
-
-#### 5.5.1 pages（插件自有页面）
-
-```json
-{
-  "pages": [
     {
-      "id": "home",
-      "title": "首页",
-      "route": "/plugin/example/home",
-      "targets": ["tv", "mobile", "pc"],
-      "render": "page_home_render",
-      "onEvent": "page_home_onEvent"
-    }
-  ]
-}
-```
-
-字段约定：
-- `id`：页面唯一 ID（插件内唯一）
-- `title`：页面标题（用于展示/入口）
-- `route`：路由（建议以 `/plugin/` 开头；宿主用于注册导航入口）
-- `targets`：可选；不填则默认等于 manifest 的 `targets`
-- `render`：渲染函数名
-- `onEvent`：可选；事件处理函数名
-
-可选字段（仅影响“插件中心/入口列表”的展示，不影响路由能力）：
-- `icon`：图标文件路径（相对插件版本目录，如 `icon.png`/`icon.svg`）；**必须加入 `files[]`** 才能被宿主下载与校验
-- `order`：排序（数字越小越靠前；默认 `0`）
-- `entry`：是否作为推荐入口（默认 `false`；宿主可用于置顶/高亮）
-
-宿主入口展示约定（MVP 建议写死，避免插件作者“不知道页面在哪里出现”）：
-- **TV**：宿主提供一个顶层 Tab：`插件`（与 TMDB/Bangumi 同级），列出所有已安装插件的 `pages`（按 `order` / `title` 排序），点击进入对应 `route`
-- **Mobile/PC**：宿主提供一个“插件中心”页面（可放在设置里或首页入口），同样列出所有 `pages`；可优先展示 `entry: true` 的页面
-- **PC（推荐）**：除“插件中心”外，可在首页顶栏（如 `主页` / `喜欢`）旁额外展示少量 `entry: true` 的页面作为一级入口（例如最多 `3` 个，按 `order` 排序），超出部分仍在“插件中心”中
-
-#### 5.5.2 dataSources
-
-```json
-{
-  "dataSources": [
+      "path": "icon.svg",
+      "size": 123,
+      "sha256": "..."
+    },
     {
-      "id": "search",
-      "title": "搜索",
-      "cacheTtlSeconds": 60,
-      "params": [{ "name": "q", "title": "关键词", "type": "input", "value": "" }],
-      "list": "ds_search_list"
+      "path": "main.js",
+      "size": 456,
+      "sha256": "..."
     }
-  ]
-}
-```
-
-- `list(ctx, params)` -> `DataPage`
-- 可选：`detail(ctx, params)` -> `DataDetail`
-
-#### 5.5.3 playSources
-
-```json
-{
-  "playSources": [
-    { "id": "resolver", "title": "解析器", "resolve": "play_resolve" }
-  ]
-}
-```
-
-- `resolve(ctx, item)` -> `Playable`
-
-#### 5.5.4 tasks
-
-```json
-{
-  "tasks": [
-    {
-      "id": "refresh",
-      "title": "刷新缓存",
-      "targets": ["mobile", "pc"],
-      "triggers": [{ "type": "cron", "expr": "0 */6 * * *" }],
-      "run": "task_refresh_run"
-    }
-  ]
-}
-```
-
-注意：移动端/TV 的后台执行能力受系统限制，宿主需做降级（例如仅前台触发或提示不可用）。
-
-#### 5.5.5 uiComponents
-
-```json
-{
-  "uiComponents": [
-    { "id": "rating_badge", "schemaType": "plugin.ratingBadge", "render": "ui_ratingBadge_render" }
-  ]
-}
-```
-
-- 插件通过返回 `type: "plugin.ratingBadge"` 的节点复用该组件
-- 宿主必须维护组件白名单（尤其 TV 端）
-
-#### 5.5.6 slots（往宿主页面“加东西”）
-
-用途：插件向宿主内置页面（如 首页 / 详情页 / 播放页）注册**插槽贡献**，宿主在指定 `slotId` 的位置渲染插件返回的 UI Schema。
-
-Manifest 结构：
-```json
-{
+  ],
   "contributions": {
+    "pages": [
+      {
+        "id": "home",
+        "title": "Quickstart",
+        "route": "/plugin/example.quickstart/home",
+        "targets": ["pc", "mobile"],
+        "render": "page_home_render",
+        "onEvent": "page_home_onEvent",
+        "icon": "icon.svg",
+        "order": 0,
+        "entry": true
+      }
+    ],
     "slots": [
       {
-        "id": "home_banner",
-        "title": "首页横幅",
+        "id": "quickstart_home",
+        "title": "Quickstart Home Card",
         "slotId": "home.feed.beforeSections",
-        "targets": ["tv", "mobile", "pc"],
+        "targets": ["pc", "mobile"],
         "render": "slot_home_render",
         "onEvent": "slot_home_onEvent",
         "priority": 0
@@ -299,210 +181,465 @@ Manifest 结构：
 }
 ```
 
-调用约定（复用 `pages` 的返回体最省事）：
-- `render(ctx, params, state)` -> `PageRenderResult`（宿主仅使用 `schema/state`，`title` 可忽略）
-- `onEvent(ctx, event, state)` -> `PageEventResult`
+### 5.2 先记住这些顶层字段
 
-合并/治理约定（建议写死，宿主必须实现）：
-- 同一个 `slotId` 可有多个贡献；宿主按 `priority` **降序**渲染（默认 `0`）
-- 宿主对每个 `slotId` 限制最多渲染 **N 个**（建议 `6` 个），其余忽略（避免占满页面/影响性能）
-- 宿主必须对白名单 `actions` 做过滤（沿用 `toast` / `navigate`）；不支持的 action 直接忽略
+必填字段：
 
-v1 MVP SlotId（先覆盖：首页 / 详情页 / 播放页）：
+- `schemaVersion`：当前固定为 `1`
+- `id`：插件唯一 ID，建议只用字母、数字、`.`、`-`、`_`
+- `name`：展示名称
+- `description`：一句话说明插件干什么
+- `version`：插件版本，使用 SemVer
+- `apiVersion`：当前固定为 `1`
+- `minHostVersion`：插件要求的最低宿主版本
+- `targets`：支持哪些端，例如 `["pc", "mobile"]`
+- `entry`：各端入口脚本
+- `permissions`：权限声明，当前最重要的是 `network`
+- `files`：需要下载和校验的文件列表
 
-**A. 首页（Home）**
+常用可选字段：
+
+- `author`
+- `license`
+- `tags`
+- `homepage`
+- `contributions`
+
+### 5.3 `entry`、`files` 和真实文件必须对得上
+
+规则很简单：
+
+- `targets` 里声明了哪个端，`entry` 里就要有哪个端
+- `entry.pc.script` / `entry.mobile.script` 指向的文件，必须存在
+- 这些入口文件也必须出现在 `files[]` 里
+- 图标如果写在 `pages[].icon` 里，也必须出现在 `files[]` 里
+
+`files[]` 不需要你手算哈希，直接用工具生成：
+
+```powershell
+python tools/update_manifest_files.py plugins/example.quickstart/1.0.0 --scan
+```
+
+### 5.4 `permissions` 先从最小权限开始
+
+如果你的插件不需要网络：
+
+```json
+{
+  "permissions": {
+    "network": { "enabled": false }
+  }
+}
+```
+
+如果需要网络：
+
+```json
+{
+  "permissions": {
+    "network": {
+      "enabled": true,
+      "domains": ["example.com", "api.example.com"]
+    }
+  }
+}
+```
+
+建议：
+
+- 只申请真的需要访问的域名
+- 不要默认写 `"*"`
+- 网络失败必须有降级处理，不要白屏
+
+## 6. `main.js` 怎么写
+
+V1 插件最重要的就是几类 handler。
+
+### 6.1 页面 handler
+
+```js
+function page_home_render(ctx, params = {}, state = {}) {
+  return {
+    title: "My Page",
+    state,
+    schema: {
+      type: "page",
+      children: []
+    }
+  };
+}
+
+function page_home_onEvent(ctx, event = {}, state = {}) {
+  return {
+    state,
+    actions: []
+  };
+}
+```
+
+可以这样理解：
+
+- `render()` 决定“页面现在长什么样”
+- `onEvent()` 决定“点了按钮以后做什么”
+
+### 6.2 插槽 handler
+
+```js
+function slot_home_render(ctx, params = {}, state = {}) {
+  return {
+    state,
+    schema: {
+      type: "card",
+      children: [{ type: "text", props: { text: "Hello" } }]
+    }
+  };
+}
+
+function slot_home_onEvent(ctx, event = {}, state = {}) {
+  return { state };
+}
+```
+
+插槽和页面几乎一样，区别只是：
+
+- 页面通常返回 `type: "page"` 作为根节点
+- 插槽通常返回一块可嵌入的 `card`、`row` 或 `column`
+
+### 6.3 `ctx` 里一般会有什么
+
+当前推荐你假设 `ctx` 至少会提供这些能力：
+
+- `ctx.target`
+- `ctx.locale`
+- `ctx.timeZone`
+- `ctx.hostVersion`
+- `ctx.plugin`
+- `ctx.settings`
+- `ctx.net.request(req)`
+- `ctx.storage.get(key)`
+- `ctx.storage.set(key, value)`
+- `ctx.storage.remove(key)`
+- `ctx.log(level, message, extra?)`
+
+插件代码要自己做空值判断，不要假设每个字段一定存在。
+
+### 6.4 `state` 该怎么用
+
+`state` 是页面或插槽自己的本地状态快照。
+
+适合放进 `state` 的内容：
+
+- 当前页码
+- 当前筛选条件
+- 最近一次请求状态
+- 当前 tab
+- 当前计数器
+
+不适合放进 `state` 的内容：
+
+- 长期持久化数据
+- 体积很大的 HTML 原文
+- 无限增长的日志
+
+需要长期保存的数据，用 `ctx.storage`。
+
+## 7. 页面插件怎么设计
+
+### 7.1 页面路由规则
+
+推荐页面路由统一写成：
+
+```text
+/plugin/<pluginId>/<pageId>
+```
+
+例如：
+
+```text
+/plugin/example.quickstart/home
+```
+
+这样好处是：
+
+- 一眼能看出属于哪个插件
+- 不容易和宿主内部路由冲突
+- 跳转时更稳定
+
+### 7.2 页面入口怎么声明
+
+页面入口写在 `contributions.pages[]` 里。
+
+关键字段：
+
+- `id`：页面在插件内的唯一 ID
+- `title`：展示名称
+- `route`：路由
+- `render`：渲染函数名
+- `onEvent`：事件函数名
+- `entry`：是否作为推荐入口
+- `icon`：页面图标
+- `order`：排序
+
+### 7.3 页面至少要考虑三种状态
+
+每个正式插件页面都应该能表达：
+
+- loading
+- empty
+- error
+
+不要只写成功路径。
+
+一个成熟插件的常见流程是：
+
+1. 首次进入先显示 loading
+2. 请求成功但无数据时显示 empty
+3. 请求失败时显示 error
+4. 如果有缓存，可优先展示缓存并提示“上次更新于”
+
+## 8. 插槽插件怎么设计
+
+### 8.1 当前主线 V1 统一 slotId
+
 - `home.feed.beforeSections`
-  - 放置点：继续观看/快捷入口之后、服务器推荐分区（sections）之前
-  - `params`：`{ "placement": "home" }`
-  - 期望 schema：`card` / `column` / `row`（用于“插件入口卡片、活动横幅、快捷按钮”）
 - `home.feed.afterSections`
-  - 放置点：所有 sections 之后、页面底部（统计/版权信息等）之前或最底部
-  - `params`：`{ "placement": "home" }`
-
-**B. 详情页（Detail / ShowDetail）**
 - `detail.hero.actions`
-  - 放置点：播放/收藏/更多那排按钮附近
-  - `params`（建议字段固定，避免宿主/插件各玩各的）：
-    ```json
-    {
-      "placement": "detail",
-      "media": {
-        "id": "xxx",
-        "type": "Movie|Series",
-        "title": "xxx",
-        "year": 2024,
-        "providerIds": { "tmdb": "", "imdb": "", "trakt": "" }
+- `detail.sections.bottom`
+- `player.appbar.trailing`
+
+### 8.2 不同 slot 适合放什么
+
+- `home.feed.beforeSections`：入口卡片、摘要卡片、活动卡片
+- `home.feed.afterSections`：补充信息、说明、扩展内容
+- `detail.hero.actions`：1 到 3 个轻量按钮
+- `detail.sections.bottom`：扩展信息卡片
+- `player.appbar.trailing`：1 到 3 个小按钮
+
+不要把大块内容硬塞进播放器顶部，也不要把详情页操作区做成半个页面。
+
+### 8.3 宿主常见传参
+
+首页：
+
+```json
+{
+  "page": "home"
+}
+```
+
+详情页：
+
+```json
+{
+  "page": "detail",
+  "media": {
+    "id": "123",
+    "type": "Movie",
+    "title": "Example",
+    "year": 2025
+  }
+}
+```
+
+播放器：
+
+```json
+{
+  "page": "player",
+  "playback": {
+    "itemId": "123",
+    "title": "Example",
+    "positionMs": 1000,
+    "durationMs": 10000
+  }
+}
+```
+
+插件侧必须自己做判空，不要假设 `media.title`、`playback.positionMs` 一定存在。
+
+## 9. UI Schema 怎么理解
+
+宿主渲染的不是 HTML，而是一棵结构化节点树。
+
+一个最小节点通常像这样：
+
+```json
+{
+  "type": "text",
+  "props": {
+    "text": "Hello"
+  }
+}
+```
+
+带交互的节点通常会把事件写在 `props.event` 里：
+
+```json
+{
+  "type": "button",
+  "props": {
+    "text": "打开",
+    "event": {
+      "name": "open_page",
+      "payload": {
+        "id": "123"
       }
     }
-    ```
-  - 期望 schema：`row`（少量按钮/徽章）
-- `detail.sections.bottom`
-  - 放置点：详情页底部额外信息区（例如在“外部链接/演员/剧集信息”之后）
-  - `params`：同上
-  - 期望 schema：`column`（信息卡片、额外分区）
-
-**C. 播放页（Player）**
-- `player.appbar.trailing`
-  - 放置点：播放器 AppBar 右侧 actions（图标按钮区）
-  - `params`：
-    ```json
-    {
-      "placement": "player",
-      "playback": { "title": "", "itemId": "?", "positionMs": 123000, "durationMs": 456000 }
-    }
-    ```
-  - 期望 schema：`row`（建议 1–3 个 `iconButton` / 按钮）
-- `player.overlay.bottom`（可选但很有用）
-  - 放置点：播放器控制层底部区域（不想挤 AppBar 的时候用）
-  - `params`：同上
-  - 期望 schema：`row` / `column`
-
-### 5.6 settingsSchema（插件设置表单 DSL）
-
-用于宿主自动生成插件设置页（可选）：
-
-```json
-{
-  "settingsSchema": [
-    { "name": "tmdbKey", "title": "TMDB Key", "type": "secret", "value": "" },
-    { "name": "language", "title": "语言", "type": "enumeration", "value": "zh-CN",
-      "enumOptions": [{ "title": "中文", "value": "zh-CN" }, { "title": "English", "value": "en-US" }] }
-  ]
+  }
 }
 ```
 
-字段建议：
-- `input` / `textarea` / `number` / `boolean`
-- `enumeration`（下拉）
-- `secret`（加密存储/不回显）
-- `constant`（只读）
+### 9.1 当前推荐的常用节点
 
-## 6. 宿主与脚本运行时契约（v1）
+布局节点：
 
-### 6.1 调用约定
+- `page`
+- `section`
+- `row`
+- `column`
+- `list`
+- `grid`
+- `card`
+- `divider`
+- `spacer`
 
-- 宿主加载 `entry.<target>.script` 并执行（eval）后，脚本必须在全局作用域定义被 `manifest` 引用的函数
-- 宿主通过脚本引擎调用：`globalThis[handlerName](ctx, ...)`
+内容节点：
 
-### 6.2 ctx（上下文对象）
+- `text`
+- `markdown`
+- `image`
+- `badge`
 
-宿主传入 `ctx`，建议包含：
-- `ctx.target`：`tv|mobile|pc`
-- `ctx.locale`：如 `zh-CN`
-- `ctx.timeZone`：如 `Asia/Shanghai`
-- `ctx.hostVersion`：宿主版本
-- `ctx.plugin`：`{ id, version }`
-- `ctx.settings`：插件设置（由宿主持久化）
-- `ctx.net.request(req)`：网络请求能力（仅当 `permissions.network.enabled: true` 时可用；否则宿主应拒绝/抛错）
-- `ctx.storage.get/set/remove`：插件私有 KV 存储
-- `ctx.log(level, message, extra?)`：日志
+交互节点：
 
-### 6.3 net.request（网络）
+- `button`
+- `iconButton`
+- `chip`
 
-请求对象建议：
+状态节点：
+
+- `loading`
+- `empty`
+- `error`
+
+### 9.2 当前推荐的 Action
+
+V1 建议只用这三类：
+
+- `toast`
+- `navigate`
+- `openUrl`
+
+示例：
+
+```js
+{ type: "toast", message: "加载成功" }
+```
+
 ```js
 {
-  url: "https://example.com",
+  type: "navigate",
+  route: "/plugin/example.quickstart/home",
+  params: {}
+}
+```
+
+```js
+{
+  type: "openUrl",
+  url: "https://example.com"
+}
+```
+
+## 10. 网络、缓存和存储
+
+### 10.1 网络请求建议
+
+如果你声明了网络权限，推荐这样请求：
+
+```js
+const res = await ctx.net.request({
+  url: "https://example.com/api/list",
   method: "GET",
-  headers: { "User-Agent": "xxx" },
-  body: null,
+  headers: {
+    "User-Agent": "example.quickstart/1.0.0",
+    "Accept": "application/json"
+  },
   timeoutMs: 15000,
-  responseType: "text" // text|json|bytes
-  cookieJarId: "default"
-}
+  responseType: "json"
+});
 ```
 
-响应对象建议：
+建议你始终这样写：
+
+- 请求逻辑单独封装
+- 每次请求都做 `try/catch`
+- 对远程返回结构做校验
+- 对空结果和接口变更做降级
+
+### 10.2 缓存建议
+
+短期缓存和持久化建议放进 `ctx.storage`：
+
 ```js
-{ status: 200, headers: { ... }, url: "最终URL", body: "..." }
+await ctx.storage.set("cache:list", data);
+await ctx.storage.set("cache:updatedAt", Date.now());
 ```
 
-原则：
-- 插件可以自行设置 UA/headers
-- 宿主不应强制注入全局 UA（或至少允许插件覆盖）
-- 宿主必须实现超时、并发限制、最大响应大小
+常见策略：
 
-## 7. UI Schema（宿主渲染）
+1. 页面先读缓存
+2. 缓存可用时先展示旧数据
+3. 再异步刷新
+4. 刷新失败时保留旧数据，并给出错误提示
 
-v1 推荐使用“组件树 + props + children”：
+## 11. 发布前你至少检查这些
 
-```json
-{
-  "type": "page",
-  "props": { "title": "示例页" },
-  "children": [
-    { "type": "text", "props": { "text": "Hello" } },
-    { "type": "button", "props": { "text": "点击", "event": { "name": "click" } } }
-  ]
-}
+### 11.1 版本和命名
+
+- `id` 和目录名一致
+- `version` 和目录名一致
+- `version` 使用 SemVer
+- `minHostVersion` 只在真的依赖新能力时提高
+
+### 11.2 文件和哈希
+
+- `files[]` 里的每个文件都真实存在
+- `entry.*.script` 都在 `files[]` 里
+- 图标如果被引用，也已经加入 `files[]`
+- 已运行过哈希更新工具
+
+### 11.3 文档和市场索引
+
+- `README.md` 写清楚这个插件做什么
+- `registry.json` 已登记该插件版本
+- 如需下架或紧急禁用，用 `blocked.json`，不要只删文件
+
+可以用下面的命令做一次仓库检查：
+
+```powershell
+python tools/validate_repo.py
 ```
 
-### 7.1 最小组件集（建议宿主内置）
+## 12. 推荐的 README 结构
 
-- 布局：`page`、`column`、`row`、`list`、`grid`、`card`、`divider`、`spacer`
-- 文本：`text`、`markdown`
-- 图片：`image`
-- 交互：`button`、`iconButton`、`textField`、`select`、`switch`
-- 标签：`chip`、`badge`
-- 状态：`loading`、`empty`、`error`
+一个插件目录下的 `README.md` 建议至少包含：
 
-### 7.2 TV 端 Focus 约定（建议预留字段）
+- 插件简介
+- 支持的平台
+- 提供了哪些页面和 slot
+- 依赖哪些外部站点或接口
+- 有没有网络权限
+- 已知限制
 
-每个可聚焦节点可带：
-- `focusId`：字符串
-- `focusNext`：`{ up, down, left, right }` 指向其他 `focusId`
+## 13. 示例从哪里看
 
-宿主也可按布局自动推导，但建议字段保留以便复杂页面可控。
+仓库里的示例插件可以这样看：
 
-### 7.3 slots MVP 推荐补充组件（更“原生”）
+- `plugins/example.quickstart/1.0.0/`：最小教程型示例，适合第一次照着写
+- `plugins/example.hello/1.0.0/`：页面、事件、网络请求
+- `plugins/example.pc.demo/1.0.0/`：PC 布局和入口示例
+- `plugins/example.mobile.demo/1.0.0/`：移动端布局和 slot 示例
+- `plugins/example.tv.demo/1.0.0/`：TV 端专用示例
 
-为让插件在 首页/详情/播放页 的插槽里“像原生一样”，建议宿主在 v1 内置以下两个组件（比让作者用 `button + text` 硬拼稳定很多，TV 焦点也更好处理）：
-
-- `iconButton`：用于 `player.appbar.trailing` 这类区域  
-  `props` 建议：`{ "icon": "xxx", "tooltip": "xxx?", "event": { "name": "xxx", "payload": {} } }`
-- `chip` / `badge`：用于详情页/卡片的小标签  
-  `props` 建议：`{ "text": "xxx", "event": { "name": "xxx", "payload": {} }? }`
-
-## 8. 返回结构（建议）
-
-### 8.1 PageRenderResult
-
-```json
-{
-  "title": "页面标题（可选）",
-  "state": { },
-  "schema": { }
-}
-```
-
-### 8.2 PageEventResult
-
-```json
-{
-  "state": { },
-  "actions": [
-    { "type": "toast", "message": "完成" },
-    { "type": "navigate", "route": "/xxx", "params": { } }
-  ]
-}
-```
-
-actions 由宿主实现白名单（避免插件执行任意原生能力）。
-
-## 9. registry.json（市场索引）规范
-
-用途：
-- 网页展示（名称/描述/标签/支持端/最新版本）
-- 客户端查更新（同 `pluginId` 多版本）
-
-索引不参与安全校验；安全校验由 `manifest.json + sha256 + blocked.json` 完成。
-
-建议字段见：`schemas/registry.schema.json`。
-
-## 10. blocked.json（下架/禁用）规范
-
-建议字段见：`schemas/blocked.schema.json`。
-
-## 11. 示例
-
-参考：`plugins/example.hello/1.0.0/manifest.json` 与 `plugins/example.hello/1.0.0/main.js`。
+如果你只看一个例子，优先看 `example.quickstart`。
