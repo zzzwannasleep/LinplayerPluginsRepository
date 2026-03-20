@@ -9,9 +9,6 @@ const elements = {
   showBlocked: document.getElementById("showBlocked"),
   count: document.getElementById("count"),
   updatedAt: document.getElementById("updatedAt"),
-  heroPluginCount: document.getElementById("heroPluginCount"),
-  heroTargetCount: document.getElementById("heroTargetCount"),
-  heroUpdatedText: document.getElementById("heroUpdatedText"),
   warn: document.getElementById("warn"),
   list: document.getElementById("list"),
   modal: document.getElementById("modal"),
@@ -162,22 +159,6 @@ function formatTargets(targets) {
   return arr.map(t => badge(map[t] ?? t, "brand")).join("");
 }
 
-function pluginTone(plugin) {
-  const tags = Array.isArray(plugin?.tags) ? plugin.tags : [];
-  const targets = Array.isArray(plugin?.targets) ? plugin.targets : [];
-
-  if (plugin?.id === "example.quickstart" || tags.includes("guide")) {
-    return { label: "入门首选", theme: "guide", featured: true };
-  }
-  if (tags.includes("network")) {
-    return { label: "网络示例", theme: "network", featured: false };
-  }
-  if (targets.length === 1 && targets[0] === "tv") {
-    return { label: "TV 专项", theme: "tv", featured: false };
-  }
-  return { label: "示例插件", theme: "default", featured: false };
-}
-
 function iconCandidates(pluginId, version) {
   const base = `plugins/${encodeURIComponent(pluginId)}/${encodeURIComponent(version)}`;
   return [`${base}/icon.svg`, `${base}/icon.png`];
@@ -278,29 +259,27 @@ function renderList() {
     const iconUrl = p.iconUrl || (best ? iconCandidates(p.id, best.version)[0] : "");
     const channelText = best?.channel ?? "stable";
     const author = p.author?.name ? `作者：${p.author.name}` : "";
-    const tone = pluginTone(p);
-    const cardClasses = ["card", `card--${tone.theme}`];
-    if (tone.featured) cardClasses.push("card--featured");
+    const isQuickstart = p.id === "example.quickstart";
 
     const badges = [
+      ...(isQuickstart ? [badge("推荐", "brand")] : []),
       ...((Array.isArray(p.tags) ? p.tags : []).slice(0, 6).map(t => badge(t))),
       ...(blocked ? [badge("已下架", "danger")] : [])
     ].join("");
 
     return `
-      <article class="${cardClasses.join(" ")}" data-id="${escapeHtml(p.id)}">
-        <div class="card__tone">${escapeHtml(tone.label)}</div>
-        <div class="card__head">
-          <div class="card__top">
-            <div class="card__icon" data-icon>
-              <img src="${escapeHtml(iconUrl)}" alt="" loading="lazy" />
-            </div>
-            <div class="card__identity">
-              <div class="card__title">${escapeHtml(p.name ?? p.id)}</div>
-              <div class="card__id">${escapeHtml(p.id)}</div>
-            </div>
+      <article class="card" data-id="${escapeHtml(p.id)}">
+        <div class="card__top">
+          <div class="card__icon" data-icon>
+            <img src="${escapeHtml(iconUrl)}" alt="" loading="lazy" />
           </div>
-          <div class="card__release">${escapeHtml(channelText)} ${escapeHtml(best?.version ?? "")}</div>
+          <div class="card__identity">
+            <div class="card__titleRow">
+              <div class="card__title">${escapeHtml(p.name ?? p.id)}</div>
+              <div class="card__version">${escapeHtml(channelText)} ${escapeHtml(best?.version ?? "")}</div>
+            </div>
+            <div class="card__id">${escapeHtml(p.id)}</div>
+          </div>
         </div>
 
         <div class="badges">${formatTargets(p.targets)}${badges ? "" : ""}${badges}</div>
@@ -309,7 +288,6 @@ function renderList() {
         <div class="meta">
           <span>${escapeHtml(author)}</span>
           <span>minHost ${escapeHtml(best?.minHostVersion ?? "-")}</span>
-          <span>${blocked ? "当前不可安装" : "可直接安装"}</span>
         </div>
 
         <div class="card__actions">
@@ -488,22 +466,6 @@ function bind() {
 
 function renderHeader() {
   elements.updatedAt.textContent = state.registry?.updatedAt ? new Date(state.registry.updatedAt).toLocaleString() : "-";
-
-  const plugins = Array.isArray(state.registry?.plugins) ? state.registry.plugins : [];
-  const targets = new Set();
-  for (const plugin of plugins) {
-    for (const target of Array.isArray(plugin?.targets) ? plugin.targets : []) {
-      targets.add(target);
-    }
-  }
-
-  if (elements.heroPluginCount) elements.heroPluginCount.textContent = String(plugins.length);
-  if (elements.heroTargetCount) elements.heroTargetCount.textContent = String(targets.size);
-  if (elements.heroUpdatedText) {
-    elements.heroUpdatedText.textContent = state.registry?.updatedAt
-      ? new Date(state.registry.updatedAt).toLocaleDateString()
-      : "-";
-  }
 
   const warnings = [];
   if (state.blocked.message) warnings.push(state.blocked.message);

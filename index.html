@@ -29,61 +29,21 @@
 
     <main class="main">
       <section class="panel hero">
-        <div class="hero__copy">
-          <div class="hero__eyebrow">Plugin Launchpad</div>
-          <h1 class="hero__title">先读规范，再选插件。市场只是最后一步。</h1>
-          <p class="hero__desc">
-            Linplayer V1 插件不建议一上来就“挑现成”。更好的路径是先理解页面、插槽和网络能力，再决定要安装、
-            参考还是自己写。先看 <code>example.quickstart</code>，再看网络示例；只有真的做 TV 时，再看 TV 专项示例。
-          </p>
-          <div class="hero__stats">
-            <div class="heroStat">
-              <span id="heroPluginCount" class="heroStat__value">0</span>
-              <span class="heroStat__label">当前示例</span>
-            </div>
-            <div class="heroStat">
-              <span id="heroTargetCount" class="heroStat__value">0</span>
-              <span class="heroStat__label">覆盖目标端</span>
-            </div>
-            <div class="heroStat">
-              <span id="heroUpdatedText" class="heroStat__value">-</span>
-              <span class="heroStat__label">索引更新</span>
-            </div>
-          </div>
-          <div class="hero__actions">
-            <a class="btn primary" href="spec.html" target="_blank" rel="noreferrer">读阅读版规范</a>
-            <a class="btn" href="plugins/example.quickstart/1.0.0/README.md" target="_blank" rel="noreferrer">看 quickstart</a>
-            <a class="btn" href="plugins/example.hello/1.0.0/README.md" target="_blank" rel="noreferrer">看网络示例</a>
-          </div>
+        <div class="hero__main">
+          <div class="hero__eyebrow">快速开始</div>
+          <h1 class="hero__title">先看规范和 quickstart，再复制安装链接。</h1>
+          <p class="hero__desc">入门先看 `SPEC.md` 和 `example.quickstart`。市场页只负责浏览、筛选和安装。</p>
         </div>
-
-        <div class="hero__guide">
-          <div class="hero__guideHead">
-            <div class="hero__guideTitle">推荐阅读顺序</div>
-            <div class="hero__guideTag">3 条主路径</div>
-          </div>
-          <ol class="hero__steps">
-            <li>先看 <a href="spec.html" target="_blank" rel="noreferrer">SPEC.md 在线阅读版</a></li>
-            <li>再看 <a href="plugins/example.quickstart/1.0.0/manifest.json" target="_blank" rel="noreferrer">example.quickstart/manifest.json</a></li>
-            <li>然后看 <a href="plugins/example.quickstart/1.0.0/main.js" target="_blank" rel="noreferrer">example.quickstart/main.js</a></li>
-            <li>需要网络请求时，再看 <a href="plugins/example.hello/1.0.0/main.js" target="_blank" rel="noreferrer">example.hello/main.js</a></li>
-            <li>如果你要做 TV，再看 <a href="plugins/example.tv.demo/1.0.0/main.js" target="_blank" rel="noreferrer">example.tv.demo/main.js</a></li>
-          </ol>
-          <div class="hero__lanes">
-            <span class="lane lane--guide">Quickstart / 入门</span>
-            <span class="lane lane--network">Network / 请求</span>
-            <span class="lane lane--tv">TV / 专项</span>
-          </div>
+        <div class="hero__actions">
+          <a class="btn primary" href="spec.html" target="_blank" rel="noreferrer">阅读版规范</a>
+          <a class="btn" href="plugins/example.quickstart/1.0.0/README.md" target="_blank" rel="noreferrer">Quickstart</a>
         </div>
       </section>
 
       <section class="panel filters">
         <div class="sectionhead">
-          <div>
-            <div class="sectionhead__eyebrow">筛选与安装</div>
-            <h2 class="sectionhead__title">从教程型示例到可安装插件，都在这里。</h2>
-          </div>
-          <div class="sectionhead__note">复制 manifest 链接到 App 即可安装</div>
+          <div class="sectionhead__title">插件列表</div>
+          <div class="sectionhead__note">复制 manifest 链接到 App 安装</div>
         </div>
 
         <div class="controls">
