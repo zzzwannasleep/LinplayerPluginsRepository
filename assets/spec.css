@@ -2,11 +2,12 @@
 
 body{
   background: var(--bg) !important;
+  background-image: none !important;
 }
 
 .doc{
   padding: 0;
-  background: transparent;
+  background: transparent !important;
   border: 0;
   box-shadow: none;
 }
@@ -15,6 +16,7 @@ body{
   display:grid;
   grid-template-columns: 260px minmax(0, 1fr);
   gap: 24px;
+  background: transparent !important;
 }
 
 .doc__left{
@@ -24,6 +26,7 @@ body{
   top: 74px;
   height: calc(100dvh - 110px);
   overflow: auto;
+  background: var(--bg) !important;
 }
 
 .doc__kicker{
@@ -34,7 +37,7 @@ body{
 
 .doc__right{
   padding: 14px 14px 18px 14px;
-  background: transparent;
+  background: var(--bg) !important;
 }
 
 .doc__status{

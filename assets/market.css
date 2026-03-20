@@ -31,14 +31,22 @@
 html,
 body {
   min-height: 100%;
-  background: var(--bg);
+  background: var(--bg) !important;
+  background-image: none !important;
 }
 
 body {
   margin: 0;
   font-family: var(--font);
-  background-color: var(--bg);
+  background: var(--bg) !important;
+  background-image: none !important;
   color: var(--text);
+}
+
+body::before,
+body::after {
+  content: none !important;
+  display: none !important;
 }
 
 a {
@@ -58,7 +66,8 @@ code {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--bg);
+  background: var(--bg) !important;
+  background-image: none !important;
   border-bottom: 1px solid var(--border);
 }
 
