@@ -21,12 +21,12 @@ body{
 
 .doc__left{
   padding: 14px 10px 14px 14px;
-  border-right: 1px solid var(--border);
+  border-right: 0;
   position: sticky;
   top: 74px;
   height: calc(100dvh - 110px);
   overflow: auto;
-  background: var(--bg) !important;
+  background: transparent !important;
 }
 
 .doc__kicker{
@@ -37,7 +37,7 @@ body{
 
 .doc__right{
   padding: 14px 14px 18px 14px;
-  background: var(--bg) !important;
+  background: transparent !important;
 }
 
 .doc__status{
@@ -61,16 +61,17 @@ body{
   padding: 6px 8px;
   border-radius: 10px;
   border: 1px solid transparent;
+  background: transparent;
 }
 
 .toc__link:hover{
-  border-color: color-mix(in srgb, var(--text) 12%, var(--border));
-  background: color-mix(in srgb, var(--panel2) 60%, transparent);
+  border-color: var(--border);
+  background: transparent;
 }
 
 .toc__link.is-active{
-  border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
-  background: color-mix(in srgb, var(--brand) 14%, var(--panel2));
+  border-color: var(--accent);
+  background: transparent;
 }
 
 .toc__link--l3{ padding-left: 22px; color: color-mix(in srgb, var(--text) 86%, var(--muted)); }
@@ -108,7 +109,7 @@ body{
   overflow:auto;
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--panel2) 70%, transparent);
+  background: var(--panel-soft);
 }
 
 .md code{
@@ -120,16 +121,17 @@ body{
   padding: 2px 6px;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--panel2) 65%, transparent);
+  background: var(--panel-soft);
 }
 
-.md a{ color: color-mix(in srgb, var(--brand) 85%, var(--text)); }
+.md a{ color: var(--accent); }
 
 .md blockquote{
   margin: 12px 0;
   padding: 8px 12px;
-  border-left: 3px solid color-mix(in srgb, var(--brand) 35%, var(--border));
-  background: color-mix(in srgb, var(--brand) 8%, var(--panel2));
+  border-left: 3px solid var(--accent);
+  border: 1px solid var(--border);
+  background: transparent;
   border-radius: 12px;
 }
 
