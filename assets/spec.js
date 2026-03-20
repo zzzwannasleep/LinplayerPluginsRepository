@@ -282,10 +282,10 @@ async function main() {
     elements.content.innerHTML = r.html;
     elements.toc.innerHTML = renderToc(r.headings);
 
-    elements.status.textContent = `已加载：SPEC.md（${md.length} 字符）`;
+    elements.status.textContent = `已加载阅读版规范：SPEC.md（${md.length} 字符）`;
     setupScrollSpy();
   } catch (e) {
-    elements.status.textContent = "加载失败：请检查 SPEC.md 是否存在。";
+    elements.status.textContent = "阅读版规范加载失败：请检查 SPEC.md 是否存在。";
     elements.content.textContent = String(e && e.message ? e.message : e);
   }
 }

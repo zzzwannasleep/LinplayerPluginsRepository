@@ -15,18 +15,45 @@
           <img class="brand__logo" src="assets/favicon.svg" alt="" />
           <div class="brand__text">
             <div class="brand__title">Linplayer 插件市场</div>
-            <div class="brand__subtitle">复制安装链接到 App 即可安装</div>
+            <div class="brand__subtitle">先读规范，再看 quickstart，再挑选插件</div>
           </div>
         </div>
 
         <nav class="top__nav">
-          <a class="link" href="spec.html" target="_blank" rel="noreferrer">规范</a>
+          <a class="link" href="spec.html" target="_blank" rel="noreferrer">阅读版规范</a>
+          <a class="link" href="plugins/example.quickstart/1.0.0/README.md" target="_blank" rel="noreferrer">Quickstart</a>
           <a class="link" href="https://github.com/zzzwannasleep/LinplayerPluginsRepository" target="_blank" rel="noreferrer">GitHub</a>
         </nav>
       </div>
     </header>
 
     <main class="main">
+      <section class="panel hero">
+        <div class="hero__copy">
+          <div class="hero__eyebrow">新手入口</div>
+          <h1 class="hero__title">先理解 V1 插件怎么做，再去复制安装链接。</h1>
+          <p class="hero__desc">
+            这个仓库现在按“阅读版规范 + 教程型示例 + 市场分发”的顺序组织。第一次接触时，先读规范，再看
+            `example.quickstart`，然后再看带网络请求和分端布局的示例。
+          </p>
+          <div class="hero__actions">
+            <a class="btn primary" href="spec.html" target="_blank" rel="noreferrer">打开阅读版规范</a>
+            <a class="btn" href="plugins/example.quickstart/1.0.0/README.md" target="_blank" rel="noreferrer">看 quickstart</a>
+            <a class="btn" href="plugins/example.quickstart/1.0.0/main.js" target="_blank" rel="noreferrer">看示例代码</a>
+          </div>
+        </div>
+
+        <div class="hero__guide">
+          <div class="hero__guideTitle">推荐阅读顺序</div>
+          <ol class="hero__steps">
+            <li>先看 <a href="spec.html" target="_blank" rel="noreferrer">SPEC.md 在线阅读版</a></li>
+            <li>再看 <a href="plugins/example.quickstart/1.0.0/manifest.json" target="_blank" rel="noreferrer">example.quickstart/manifest.json</a></li>
+            <li>然后看 <a href="plugins/example.quickstart/1.0.0/main.js" target="_blank" rel="noreferrer">example.quickstart/main.js</a></li>
+            <li>需要网络请求时，再看 <a href="plugins/example.hello/1.0.0/main.js" target="_blank" rel="noreferrer">example.hello/main.js</a></li>
+          </ol>
+        </div>
+      </section>
+
       <section class="panel">
         <div class="controls">
           <label class="field">
