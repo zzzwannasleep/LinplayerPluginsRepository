@@ -31,12 +31,13 @@
 html,
 body {
   min-height: 100%;
+  background: var(--bg);
 }
 
 body {
   margin: 0;
   font-family: var(--font);
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--text);
 }
 
@@ -178,7 +179,7 @@ code {
 .sectionhead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -186,11 +187,6 @@ code {
 .sectionhead__title {
   font-size: 18px;
   font-weight: 700;
-}
-
-.sectionhead__note {
-  color: var(--muted);
-  font-size: 13px;
 }
 
 .controls {
@@ -409,6 +405,14 @@ code {
   text-decoration: none;
   font: inherit;
   cursor: pointer;
+}
+
+.btn:link,
+.btn:visited,
+.btn:hover,
+.btn:active,
+.btn:focus {
+  text-decoration: none !important;
 }
 
 .btn:hover {
