@@ -14,4 +14,4 @@
 - `icon.svg`：页面入口图标
 
 你可以把这个示例和 `SPEC.md` 对照着看。
-如果你还想看“打开网站 + 最小网络请求”，继续看 `plugins/example.hello/1.0.0/`。
+如果你还想看 `openUrl`、辅助 `webview` 和最小网络请求，继续看 `plugins/example.hello/1.0.0/`。

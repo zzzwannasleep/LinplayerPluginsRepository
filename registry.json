@@ -4,8 +4,8 @@
     "plugins":  [
                     {
                         "id":  "example.hello",
-                        "name":  "Open Website Example Plugin",
-                        "description":  "演示：openUrl 打开网站 + 最小网络请求",
+                        "name":  "Website + Network Example Plugin",
+                        "description":  "演示：openUrl、辅助 webview、ctx.net.request()",
                         "author":  {
                                        "name":  "Example"
                                    },

@@ -15,7 +15,7 @@
 - `SPEC.md` 是当前更适合直接阅读和照着做的 V1 规范
 - `PLUGIN_SPEC_V1.md` 保留为更细的草案文档
 - `example.quickstart` 是最小教程型示例，适合直接照抄结构起步
-- `example.hello` 演示 `openUrl` 打开网站和最小网络请求
+- `example.hello` 演示 `openUrl`、辅助 `webview` 和最小网络请求
 
 ## 仓库里有什么
 

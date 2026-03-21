@@ -68,6 +68,12 @@ V1 推荐两类能力：
 2. 解析和标准化数据
 3. 返回宿主可渲染的卡片、列表、按钮和文本
 
+补充说明：
+
+- V1 可以允许受控 `webview` 节点
+- 但它只能作为页面里的辅助展示块，不能替代页面主结构
+- 也不能把整个插件页面做成远端站点的完整壳
+
 ## 3. 做一个插件的最短路径
 
 如果你只是想尽快做出第一个插件，按下面顺序做就够了：
@@ -250,6 +256,7 @@ python tools/update_manifest_files.py plugins/example.quickstart/1.0.0 --scan
 - 只申请真的需要访问的域名
 - 不要默认写 `"*"`
 - 网络失败必须有降级处理，不要白屏
+- 这些域名白名单也会用于插件 `webview` 的 `src` 和顶层导航校验
 
 ## 6. `main.js` 怎么写
 
@@ -508,6 +515,7 @@ function slot_home_onEvent(ctx, event = {}, state = {}) {
 - `text`
 - `markdown`
 - `image`
+- `webview`
 - `badge`
 
 交互节点：
@@ -522,7 +530,61 @@ function slot_home_onEvent(ctx, event = {}, state = {}) {
 - `empty`
 - `error`
 
-### 9.2 当前推荐的 Action
+### 9.2 `webview` 什么时候可以用
+
+只有在下面这类场景里，才建议你使用 `webview`：
+
+- 远端内容本身必须保留原始网页交互
+- 这部分内容只是页面中的一个辅助块
+- 你已经确认很难用普通 `text` / `image` / `button` / `card` 表达
+
+不要这样用：
+
+- 把整个首页或唯一页面做成整页 WebView
+- 把一个资讯站、论坛页、后台页整站塞进宿主
+- 依赖网页里的脚本直接调用宿主私有能力
+- 在核心 slot 里放一大块可滚动网页
+
+最小示例：
+
+```json
+{
+  "type": "webview",
+  "props": {
+    "src": "https://example.com/embed/help",
+    "height": 420,
+    "title": "帮助页",
+    "allowExternalNavigation": false,
+    "showProgress": true
+  }
+}
+```
+
+字段说明：
+
+- `src`：必填，必须是绝对 `http/https` URL
+- `height`：必填，建议给明确高度，不要依赖自动撑开
+- `title`：可选，给加载失败态和无障碍描述用
+- `allowExternalNavigation`：可选，默认 `false`
+- `showProgress`：可选，默认 `true`
+
+你需要记住这些约束：
+
+- `webview` 只建议放在 `page` 里，不要放到 `slot`
+- `src` 的域名必须包含在 `permissions.network.domains` 里
+- 后续顶层跳转也会继续受这个白名单限制
+- 超出白名单的跳转，宿主可能拦截，也可能转成外部浏览器打开
+- `webview` 页面拿不到 `ctx`
+- 不要指望在网页里直接调用插件 handler 或宿主 bridge
+
+推荐做法：
+
+1. 能结构化展示的内容，优先结构化展示
+2. 只有必须保留网页交互的部分，再单独放一个 `webview` 块
+3. 给 `webview` 外面包一层普通 `section` 或 `card`
+4. 对加载失败和外链跳转准备明确提示
+
+### 9.3 当前推荐的 Action
 
 V1 建议只用这三类：
 

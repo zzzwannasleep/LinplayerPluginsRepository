@@ -1,8 +1,8 @@
 {
     "schemaVersion":  1,
     "id":  "example.hello",
-    "name":  "Open Website Example Plugin",
-    "description":  "演示：openUrl 打开网站 + 最小网络请求",
+    "name":  "Website + Network Example Plugin",
+    "description":  "演示：openUrl、辅助 webview、ctx.net.request()",
     "version":  "1.0.0",
     "apiVersion":  1,
     "minHostVersion":  "1.0.0",
@@ -34,15 +34,15 @@
     "files":  [
                   {
                       "path":  "main.js",
-                      "size":  4778,
-                      "sha256":  "7a2de58f10a49410967c283dfae8a53518488f8462604c1b9b260ed1ee122f93"
+                      "size":  9620,
+                      "sha256":  "e3ada34a044104aa8d3ebb4c4e9023bc140320d8abf67798e7320cda465c61d5"
                   }
               ],
     "contributions":  {
                           "pages":  [
                                         {
                                             "id":  "home",
-                                            "title":  "Open Website Example",
+                                            "title":  "Website + Network Example",
                                             "route":  "/plugin/example.hello/home",
                                             "targets":  [
                                                             "mobile",
