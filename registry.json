@@ -4,8 +4,8 @@
     "plugins":  [
                     {
                         "id":  "example.hello",
-                        "name":  "Network Example Plugin",
-                        "description":  "演示：最小网络请求 + 错误处理 + openUrl",
+                        "name":  "Open Website Example Plugin",
+                        "description":  "演示：openUrl 打开网站 + 最小网络请求",
                         "author":  {
                                        "name":  "Example"
                                    },

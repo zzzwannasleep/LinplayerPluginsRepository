@@ -1,8 +1,8 @@
 {
     "schemaVersion":  1,
     "id":  "example.hello",
-    "name":  "Network Example Plugin",
-    "description":  "演示：最小网络请求 + 错误处理 + openUrl",
+    "name":  "Open Website Example Plugin",
+    "description":  "演示：openUrl 打开网站 + 最小网络请求",
     "version":  "1.0.0",
     "apiVersion":  1,
     "minHostVersion":  "1.0.0",
@@ -25,22 +25,24 @@
                         "network":  {
                                         "enabled":  true,
                                         "domains":  [
-                                                        "httpbin.org"
+                                                        "httpbin.org",
+                                                        "bilibili.com",
+                                                        "www.bilibili.com"
                                                     ]
                                     }
                     },
     "files":  [
                   {
                       "path":  "main.js",
-                      "size":  4378,
-                      "sha256":  "528f2a0be482c3b3f1066944f96d3d5b7fa0953e8dc497e5d08a2b222d81a612"
+                      "size":  4778,
+                      "sha256":  "7a2de58f10a49410967c283dfae8a53518488f8462604c1b9b260ed1ee122f93"
                   }
               ],
     "contributions":  {
                           "pages":  [
                                         {
                                             "id":  "home",
-                                            "title":  "Network Example",
+                                            "title":  "Open Website Example",
                                             "route":  "/plugin/example.hello/home",
                                             "targets":  [
                                                             "mobile",

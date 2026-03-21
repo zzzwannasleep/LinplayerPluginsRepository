@@ -1,14 +1,13 @@
 # 插件市场仓库
 
 这是一个独立于主应用仓库的插件市场仓库，用来存放插件文件、索引和规范文档。
-
 如果你是第一次接触这个仓库，建议不要先看 schema，而是按下面顺序读。
 
 ## 先看什么
 
 1. 先读 `SPEC.md`
 2. 再看 `plugins/example.quickstart/1.0.0/`
-3. 需要网络请求示例时，再看 `plugins/example.hello/1.0.0/`
+3. 需要看“打开网站 + 最小网络请求”示例时，再看 `plugins/example.hello/1.0.0/`
 4. 如果你确实要做 TV，再看 `plugins/example.tv.demo/1.0.0/`
 
 说明：
@@ -16,7 +15,7 @@
 - `SPEC.md` 是当前更适合直接阅读和照着做的 V1 规范
 - `PLUGIN_SPEC_V1.md` 保留为更细的草案文档
 - `example.quickstart` 是最小教程型示例，适合直接照抄结构起步
-- `example.hello` 是纯网络请求示例
+- `example.hello` 演示 `openUrl` 打开网站和最小网络请求
 
 ## 仓库里有什么
 
