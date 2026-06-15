@@ -1,268 +1,102 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/schemas/plugin-manifest.schema.json",
-  "title": "Plugin Manifest (schemaVersion=1)",
+  "$id": "https://linplayer.dev/schemas/manifest.schema.json",
+  "title": "LinPlayer Plugin Manifest",
+  "description": "manifest.json 的格式，与 App 内置插件加载器（lib/plugins）一致。",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schemaVersion",
-    "id",
-    "name",
-    "description",
-    "version",
-    "apiVersion",
-    "minHostVersion",
-    "targets",
-    "entry",
-    "permissions",
-    "files"
-  ],
+  "required": ["id", "version", "name", "description", "permissions"],
   "properties": {
-    "schemaVersion": { "type": "integer", "const": 1 },
     "id": {
       "type": "string",
-      "minLength": 3,
-      "maxLength": 200,
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+      "description": "反向域名唯一标识，至少包含一个点。",
+      "pattern": "^[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)+$",
+      "maxLength": 200
     },
-    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
-    "description": { "type": "string", "minLength": 1, "maxLength": 300 },
     "version": {
       "type": "string",
+      "description": "语义化版本 major.minor.patch。",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
     },
-    "apiVersion": { "type": "integer", "minimum": 1 },
-    "minHostVersion": {
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "author": { "type": "string", "maxLength": 80 },
+    "description": { "type": "string", "minLength": 1, "maxLength": 300 },
+    "main": {
+      "type": "string",
+      "description": "入口 JS 文件名，默认 main.js。",
+      "maxLength": 200
+    },
+    "icon": { "type": "string", "maxLength": 200 },
+    "homepage": { "type": "string", "maxLength": 300 },
+    "minAppVersion": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
     },
-    "author": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["name"],
-      "properties": {
-        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "homepage": { "type": "string", "format": "uri" }
-      }
-    },
-    "homepage": { "type": "string", "format": "uri" },
-    "license": { "type": "string", "minLength": 1, "maxLength": 80 },
-    "tags": { "type": "array", "items": { "type": "string", "maxLength": 30 }, "maxItems": 30, "uniqueItems": true },
-    "targets": {
+    "tags": {
       "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": { "type": "string", "enum": ["tv", "mobile", "pc"] }
+      "items": { "type": "string", "maxLength": 30 },
+      "maxItems": 30,
+      "uniqueItems": true
     },
-    "entry": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "tv": { "$ref": "#/$defs/entryItem" },
-        "mobile": { "$ref": "#/$defs/entryItem" },
-        "pc": { "$ref": "#/$defs/entryItem" }
-      }
-    },
+    "license": { "type": "string", "maxLength": 80 },
     "permissions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "network": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["enabled"],
-          "properties": {
-            "enabled": { "type": "boolean" },
-            "domains": {
-              "type": "array",
-              "items": { "type": "string", "minLength": 1, "maxLength": 255 },
-              "maxItems": 200
-            }
-          },
-          "allOf": [
-            {
-              "if": { "properties": { "enabled": { "const": true } } },
-              "then": {
-                "required": ["domains"],
-                "properties": { "domains": { "minItems": 1 } }
-              }
-            }
-          ]
-        }
-      }
-    },
-    "files": {
       "type": "array",
-      "minItems": 1,
-      "maxItems": 200,
-      "items": { "$ref": "#/$defs/fileItem" }
-    },
-    "contributions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "pages": { "type": "array", "items": { "$ref": "#/$defs/pageContribution" }, "maxItems": 200 },
-        "slots": { "type": "array", "items": { "$ref": "#/$defs/slotContribution" }, "maxItems": 200 },
-        "dataSources": { "type": "array", "items": { "$ref": "#/$defs/dataSourceContribution" }, "maxItems": 200 },
-        "playSources": { "type": "array", "items": { "$ref": "#/$defs/playSourceContribution" }, "maxItems": 200 },
-        "tasks": { "type": "array", "items": { "$ref": "#/$defs/taskContribution" }, "maxItems": 200 },
-        "uiComponents": { "type": "array", "items": { "$ref": "#/$defs/uiComponentContribution" }, "maxItems": 200 }
+      "description": "申请的能力，启用前需用户同意。",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "player.read",
+          "player.control",
+          "http",
+          "storage",
+          "ui",
+          "emby.read",
+          "emby.api",
+          "emby.credentials",
+          "extensions",
+          "log"
+        ]
       }
     },
-    "settingsSchema": { "$ref": "#/$defs/formSchema" }
+    "httpAllowedHosts": {
+      "type": "array",
+      "description": "HTTPS 域名白名单（空=不限 host，但仍强制 HTTPS）。",
+      "items": { "type": "string", "minLength": 1, "maxLength": 255 },
+      "maxItems": 200
+    },
+    "extends": {
+      "type": "object",
+      "description": "静态声明的扩展点。",
+      "additionalProperties": false,
+      "properties": {
+        "sidebarItems": { "$ref": "#/$defs/extList" },
+        "mediaSources": { "$ref": "#/$defs/extList" },
+        "actions": { "$ref": "#/$defs/extList" },
+        "eventListeners": { "$ref": "#/$defs/extList" },
+        "settingsPages": { "$ref": "#/$defs/extList" },
+        "playerOverlays": { "$ref": "#/$defs/extList" },
+        "contextMenus": { "$ref": "#/$defs/extList" },
+        "homeStats": { "$ref": "#/$defs/extList" }
+      }
+    }
   },
   "$defs": {
-    "entryItem": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["script"],
-      "properties": {
-        "script": { "type": "string", "minLength": 1, "maxLength": 300 }
-      }
-    },
-    "fileItem": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["path", "size", "sha256"],
-      "properties": {
-        "path": { "type": "string", "minLength": 1, "maxLength": 300 },
-        "size": { "type": "integer", "minimum": 0 },
-        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
-      }
-    },
-    "formSchema": {
+    "extList": {
       "type": "array",
-      "maxItems": 200,
-      "items": { "$ref": "#/$defs/formField" }
-    },
-    "formField": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["name", "title", "type"],
-      "properties": {
-        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "type": {
-          "type": "string",
-          "enum": [
-            "input",
-            "textarea",
-            "number",
-            "boolean",
-            "enumeration",
-            "language",
-            "page",
-            "constant",
-            "secret"
-          ]
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "description": "扩展点描述，字段随类型而定（常见：id/title/icon/handler/route）。",
+        "properties": {
+          "id": { "type": "string", "maxLength": 80 },
+          "title": { "type": "string", "maxLength": 80 },
+          "icon": { "type": "string", "maxLength": 200 },
+          "handler": { "type": "string", "maxLength": 120 },
+          "route": { "type": "string", "maxLength": 200 }
         },
-        "description": { "type": "string", "maxLength": 300 },
-        "placeholder": { "type": "string", "maxLength": 200 },
-        "value": {},
-        "enumOptions": {
-          "type": "array",
-          "maxItems": 200,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["title", "value"],
-            "properties": {
-              "title": { "type": "string", "minLength": 1, "maxLength": 80 },
-              "value": {}
-            }
-          }
-        }
-      }
-    },
-    "pageContribution": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "title", "render"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "route": { "type": "string", "minLength": 1, "maxLength": 200 },
-        "icon": { "type": "string", "minLength": 1, "maxLength": 300 },
-        "order": { "type": "integer" },
-        "entry": { "type": "boolean" },
-        "targets": { "type": "array", "items": { "type": "string", "enum": ["tv", "mobile", "pc"] }, "uniqueItems": true },
-        "render": { "type": "string", "minLength": 1, "maxLength": 120 },
-        "onEvent": { "type": "string", "minLength": 1, "maxLength": 120 }
-      }
-    },
-    "slotContribution": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "title", "slotId", "render"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "slotId": { "type": "string", "minLength": 1, "maxLength": 200 },
-        "targets": { "type": "array", "items": { "type": "string", "enum": ["tv", "mobile", "pc"] }, "uniqueItems": true },
-        "render": { "type": "string", "minLength": 1, "maxLength": 120 },
-        "onEvent": { "type": "string", "minLength": 1, "maxLength": 120 },
-        "priority": { "type": "integer" }
-      }
-    },
-    "dataSourceContribution": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "title", "list"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "cacheTtlSeconds": { "type": "integer", "minimum": 0, "maximum": 31536000 },
-        "params": { "$ref": "#/$defs/formSchema" },
-        "list": { "type": "string", "minLength": 1, "maxLength": 120 },
-        "detail": { "type": "string", "minLength": 1, "maxLength": 120 }
-      }
-    },
-    "playSourceContribution": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "title", "resolve"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "resolve": { "type": "string", "minLength": 1, "maxLength": 120 }
-      }
-    },
-    "taskContribution": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "title", "triggers", "run"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "targets": { "type": "array", "items": { "type": "string", "enum": ["tv", "mobile", "pc"] }, "uniqueItems": true },
-        "triggers": {
-          "type": "array",
-          "minItems": 1,
-          "maxItems": 50,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["type"],
-            "properties": {
-              "type": { "type": "string", "enum": ["manual", "onStart", "cron", "interval"] },
-              "expr": { "type": "string", "maxLength": 100 }
-            }
-          }
-        },
-        "run": { "type": "string", "minLength": 1, "maxLength": 120 }
-      }
-    },
-    "uiComponentContribution": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "schemaType", "render"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "title": { "type": "string", "maxLength": 80 },
-        "schemaType": { "type": "string", "minLength": 1, "maxLength": 120 },
-        "render": { "type": "string", "minLength": 1, "maxLength": 120 }
+        "additionalProperties": true
       }
     }
   }
 }
-

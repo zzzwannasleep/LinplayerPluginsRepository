@@ -1,80 +1,57 @@
 {
-    "schemaVersion":  1,
-    "updatedAt":  "2026-03-21T00:00:00Z",
-    "plugins":  [
-                    {
-                        "id":  "example.hello",
-                        "name":  "Website + Network Example Plugin",
-                        "description":  "演示：openUrl、辅助 webview、ctx.net.request()",
-                        "author":  {
-                                       "name":  "Example"
-                                   },
-                        "tags":  [
-                                     "demo",
-                                     "network"
-                                 ],
-                        "targets":  [
-                                        "mobile",
-                                        "pc"
-                                    ],
-                        "versions":  [
-                                         {
-                                             "version":  "1.0.0",
-                                             "channel":  "stable",
-                                             "apiVersion":  1,
-                                             "minHostVersion":  "1.0.0",
-                                             "manifestUrl":  "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/example.hello/1.0.0/manifest.json"
-                                         }
-                                     ]
-                    },
-                    {
-                        "id":  "example.quickstart",
-                        "name":  "Quickstart Plugin",
-                        "description":  "教程型示例：最小页面 + 插槽 + 事件交互",
-                        "author":  {
-                                       "name":  "Example"
-                                   },
-                        "tags":  [
-                                     "demo",
-                                     "guide"
-                                 ],
-                        "targets":  [
-                                        "pc",
-                                        "mobile"
-                                    ],
-                        "versions":  [
-                                         {
-                                             "version":  "1.0.0",
-                                             "channel":  "stable",
-                                             "apiVersion":  1,
-                                             "minHostVersion":  "1.0.0",
-                                             "manifestUrl":  "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/example.quickstart/1.0.0/manifest.json"
-                                         }
-                                     ]
-                    },
-                    {
-                        "id":  "example.tv.demo",
-                        "name":  "TV Demo Plugin",
-                        "description":  "演示：TV 端 Focus + slots（Home/Player）",
-                        "author":  {
-                                       "name":  "Example"
-                                   },
-                        "tags":  [
-                                     "demo",
-                                     "tv"
-                                 ],
-                        "targets":  [
-                                        "tv"
-                                    ],
-                        "versions":  [
-                                         {
-                                             "version":  "1.0.0",
-                                             "channel":  "stable",
-                                             "apiVersion":  1,
-                                             "minHostVersion":  "0.0.1",
-                                             "manifestUrl":  "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/example.tv.demo/1.0.0/manifest.json"
-                                         }
-                                     ]
-                    }
-                ]
+  "schemaVersion": 1,
+  "updatedAt": "2026-06-15T00:00:00Z",
+  "plugins": [
+    {
+      "id": "com.linplayer.hello",
+      "name": "Hello 示例",
+      "description": "最小教程型插件：首页问候 + 设置页。照抄起步用。",
+      "author": { "name": "LinPlayer" },
+      "tags": ["demo", "guide"],
+      "targets": ["pc", "mobile"],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "channel": "stable",
+          "apiVersion": 1,
+          "minHostVersion": "1.0.0",
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.hello/1.0.0/manifest.json"
+        }
+      ]
+    },
+    {
+      "id": "com.linplayer.telegram-notify",
+      "name": "Telegram 播放通知",
+      "description": "每播放完一集自动通过 Telegram Bot 发送通知。",
+      "author": { "name": "LinPlayer" },
+      "tags": ["notify", "telegram", "player"],
+      "targets": ["mobile", "pc", "tv"],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "channel": "stable",
+          "apiVersion": 1,
+          "minHostVersion": "1.0.0",
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.telegram-notify/1.0.0/manifest.json"
+        }
+      ]
+    },
+    {
+      "id": "com.linplayer.uhdnow-traffic",
+      "name": "UHDNow 流量统计",
+      "description": "uhdnow 服务器在首页媒体计数旁显示剩余/总流量（账密自动登录）。",
+      "author": { "name": "LinPlayer" },
+      "tags": ["uhdnow", "traffic", "homeStats"],
+      "targets": ["pc", "mobile"],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "channel": "stable",
+          "apiVersion": 1,
+          "minHostVersion": "1.0.0",
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-traffic/1.0.0/manifest.json"
+        }
+      ]
+    }
+  ]
 }

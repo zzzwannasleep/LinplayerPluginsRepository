@@ -259,7 +259,7 @@ function renderList() {
     const iconUrl = p.iconUrl || (best ? iconCandidates(p.id, best.version)[0] : "");
     const channelText = best?.channel ?? "stable";
     const author = p.author?.name ? `作者：${p.author.name}` : "";
-    const isQuickstart = p.id === "example.quickstart";
+    const isQuickstart = p.id === "com.linplayer.hello";
 
     const badges = [
       ...(isQuickstart ? [badge("推荐", "brand")] : []),

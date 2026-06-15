@@ -1,78 +1,131 @@
-# 插件市场仓库
+# LinPlayer 插件仓库
 
-这是一个独立于主应用仓库的插件市场仓库，用来存放插件文件、索引和规范文档。
-如果你是第一次接触这个仓库，建议不要先看 schema，而是按下面顺序读。
+LinPlayer 的插件市场仓库：存放插件文件、市场索引、规范文档和校验工具。
+插件是跑在 App 内 **QuickJS** 里的 JavaScript，通过受权限控制的 `ctx` 与宿主交互。
 
-## 先看什么
+> 想了解完整 API 看 [`SPEC.md`](SPEC.md)。想直接上手就照着
+> [`plugins/com.linplayer.hello/1.0.0/`](plugins/com.linplayer.hello/1.0.0/) 抄。
 
-1. 先读 `SPEC.md`
-2. 再看 `plugins/example.quickstart/1.0.0/`
-3. 需要看“打开网站 + 最小网络请求”示例时，再看 `plugins/example.hello/1.0.0/`
-4. 如果你确实要做 TV，再看 `plugins/example.tv.demo/1.0.0/`
+## 仓库结构
 
-说明：
-
-- `SPEC.md` 是当前更适合直接阅读和照着做的 V1 规范
-- `PLUGIN_SPEC_V1.md` 保留为更细的草案文档
-- `example.quickstart` 是最小教程型示例，适合直接照抄结构起步
-- `example.hello` 演示 `openUrl`、辅助 `webview` 和最小网络请求
-
-## 仓库里有什么
-
-- `plugins/<pluginId>/<version>/...`：插件文件，一个插件一个目录，按版本归档
-- `registry.json`：市场索引，用于网页展示和客户端查更新
-- `blocked.json`：下架和禁用清单，用于 kill switch
-- `schemas/`：JSON Schema，给编辑器和 CI 校验用
-- `tools/`：更新哈希和做仓库检查的脚本
-- `SPEC.md`：阅读版规范
-
-## 最短开发流程
-
-1. 新建目录 `plugins/<pluginId>/<version>/`
-2. 参考 `plugins/example.quickstart/1.0.0/` 放入 `manifest.json`、`main.js`、可选图标和 README
-3. 按 `SPEC.md` 写好 `contributions.pages` 和需要的 `contributions.slots`
-4. 运行 `tools/update_manifest_files.py` 或 `tools/update_manifest_files.ps1` 更新 `files[].size` 和 `files[].sha256`
-5. 更新 `registry.json`
-
-## 安装链接
-
-用户复制到 App 的安装链接，统一指向某个版本的 `manifest.json`：
-
-```text
-https://raw.githubusercontent.com/<owner>/<repo>/<ref>/plugins/<pluginId>/<version>/manifest.json
+```
+plugins/<id>/<version>/   插件文件，一个插件一个目录，按版本归档
+registry.json             市场索引（网页展示 + 客户端查更新）
+blocked.json              下架/禁用清单（kill switch）
+schemas/                  JSON Schema（manifest / registry / blocked）
+tools/                    校验与打包脚本
+SPEC.md                   插件规范（完整 API）
+index.html                零依赖的静态市场页（Cloudflare Pages）
 ```
 
-强烈建议 `<ref>` 使用 tag 或 commit SHA，不要使用 `main`，否则同一链接内容可变，完整性校验会被削弱。
+## 5 分钟写一个插件
 
-## 发布前检查
+一个插件至少要 `manifest.json` + `main.js`。
 
-至少确认这些：
-
-- `id` 和目录名一致
-- `version` 和目录名一致
-- `entry.*.script` 已加入 `files[]`
-- 引用到的图标文件已加入 `files[]`
-- 已更新 `registry.json`
-
-如果本机环境可用，可以运行：
-
-```powershell
-python tools/validate_repo.py
+**manifest.json**
+```json
+{
+  "id": "com.example.foo",
+  "version": "1.0.0",
+  "name": "我的插件",
+  "description": "干什么用的",
+  "permissions": ["ui", "storage", "extensions"],
+  "extends": {
+    "settingsPages": [{ "id": "settings", "title": "设置", "handler": "openSettings" }]
+  }
+}
 ```
 
-## 前端页面（Cloudflare Pages）
+**main.js**
+```js
+'use strict';
 
-仓库根目录的 `index.html` 是一个零依赖的静态插件市场页：
+async function homeMetric() {
+  const name = (await ctx.storage.get('name')) || 'World';
+  return { metrics: [{ label: '问候', value: 'Hello, ' + name }] };
+}
 
-- 自动读取 `registry.json` / `blocked.json`
-- 支持搜索、按端筛选、复制安装链接
+async function openSettings() {
+  const v = await ctx.ui.showForm({
+    title: '设置',
+    fields: [{ key: 'name', label: '称呼', type: 'text', default: '' }]
+  });
+  if (!v) return;
+  await ctx.storage.set('name', v.name || 'World');
+  ctx.ui.showToast('已保存');
+}
 
-部署到 Cloudflare Pages：
+ctx.onEnable(async () => {
+  await ctx.extensions.register('homeStats', { id: 'hi', title: '问候', handler: homeMetric });
+});
+```
 
-- 直接把本仓库连接到 Pages
-- Build command：留空，或 `echo skip`
-- Build output directory：`.`
+`ctx` 提供 `log / http / storage / player / ui / emby / extensions / sleep`，
+扩展点有 `homeStats / sidebarItems / actions / settingsPages / ...`。完整见 [`SPEC.md`](SPEC.md)。
 
-## 免责声明建议
+## 开发流程
 
-> 本仓库插件由社区贡献，仅供学习交流。插件可能访问第三方站点并返回不稳定结果。请在合法合规前提下使用。仓库维护者不对插件内容与由此带来的损失承担责任。
+1. 新建目录 `plugins/<id>/<version>/`（目录名要和 manifest 的 `id`/`version` 一致）。
+2. 照 `com.linplayer.hello` 写 `manifest.json` + `main.js`（可选 `icon.svg`、`README.md`）。
+3. 本地校验：
+   ```bash
+   python tools/validate_repo.py
+   ```
+4. 打包成 `.lpk` 自测：
+   ```bash
+   python tools/pack_plugin.py plugins/<id>/<version>/
+   # 产物 dist/<id>-<version>.lpk
+   ```
+5. App「设置 → 插件 → +」选择该 `.lpk` 安装，同意权限后启用。
+6. 发布：把插件加入 `registry.json`（见下）。
+
+## 发布到市场
+
+在 `registry.json` 的 `plugins[]` 里加一条，`versions[].manifestUrl` 指向该版本的
+`manifest.json`（raw 链接）：
+
+```jsonc
+{
+  "id": "com.example.foo",
+  "name": "我的插件",
+  "description": "...",
+  "author": { "name": "你" },
+  "tags": ["demo"],
+  "targets": ["pc", "mobile"],            // 市场筛选用：tv / mobile / pc
+  "versions": [{
+    "version": "1.0.0",
+    "channel": "stable",
+    "apiVersion": 1,
+    "minHostVersion": "1.0.0",
+    "manifestUrl": "https://raw.githubusercontent.com/<owner>/<repo>/<ref>/plugins/com.example.foo/1.0.0/manifest.json"
+  }]
+}
+```
+
+建议 `<ref>` 用 tag 或 commit SHA，不要用 `main`（内容可变，削弱完整性）。
+下架某插件/版本：写进 `blocked.json`。
+
+## 安装方式
+
+当前 App 通过本地 `.lpk` 安装（设置 → 插件 → +）。把
+`plugins/<id>/<version>/` 目录用 `tools/pack_plugin.py` 打成 `.lpk` 即可。
+（市场页的「复制安装链接」给出的是 `manifestUrl`，用于浏览与未来的在线安装。）
+
+## 示例插件
+
+| 插件 | 演示 |
+|------|------|
+| `com.linplayer.hello` | 最小教程：homeStats + 设置表单 |
+| `com.linplayer.telegram-notify` | 监听 onPlayEnd + ctx.http + 设置表单 |
+| `com.linplayer.uhdnow-traffic` | emby 服务器检测 + 账密自动登录 + 首页流量统计 |
+
+## 网页市场（Cloudflare Pages）
+
+根目录 `index.html` 是零依赖静态页，自动读 `registry.json` / `blocked.json`，
+支持搜索、按端筛选、复制安装链接。部署：仓库连到 Pages，Build command 留空，
+输出目录 `.`。
+
+## 免责声明
+
+> 本仓库插件由社区贡献，仅供学习交流。插件可能访问第三方站点并返回不稳定结果。
+> 请在合法合规前提下使用。维护者不对插件内容及由此带来的损失负责。
