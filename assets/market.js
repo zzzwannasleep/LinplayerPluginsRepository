@@ -32,6 +32,9 @@ const els = {
 const state = { registry: null, blocked: null, plugins: [], q: "" };
 let layer = null;
 
+// warm = 本会话已展示过加载动画（由 HTML head 脚本置位），后续只淡入、不再显示 loader。
+const WARM = document.documentElement.hasAttribute("data-warm");
+
 // 看门狗：若 8 秒后仍未进入（网络/异常/旧缓存等），给出可见提示与重试，避免无限转圈。
 setTimeout(() => {
   if (els.app && els.app.classList.contains("is-hidden") && els.plText) {
@@ -48,7 +51,7 @@ async function init() {
     const [registry, blockedRaw] = await Promise.all([
       fetchJson(registryUrl),
       fetchJson(blockedUrl).catch(() => null),
-      delay(400),
+      delay(WARM ? 0 : 400),
     ]);
     state.registry = registry;
     state.blocked = parseBlocked(blockedRaw || {});
@@ -73,10 +76,13 @@ async function init() {
 
 function enterApp() {
   const pre = els.preloader;
-  pre.classList.add("animate__animated", "animate__fadeOut");
-  pre.addEventListener("animationend", () => (pre.style.display = "none"), { once: true });
+  if (pre && !WARM) {
+    pre.classList.add("animate__animated", "animate__fadeOut");
+    pre.addEventListener("animationend", () => (pre.style.display = "none"), { once: true });
+  }
   els.app.classList.remove("is-hidden");
-  els.app.classList.add("animate__animated", "animate__fadeInUp");
+  els.app.classList.add("animate__animated", WARM ? "animate__fadeIn" : "animate__fadeInUp");
+  if (WARM) els.app.style.setProperty("--animate-duration", "0.4s");
 }
 
 function showError(e) {

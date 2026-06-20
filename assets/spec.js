@@ -8,6 +8,9 @@ const els = {
   content: document.getElementById("content"),
 };
 
+// warm = 本会话已展示过加载动画，后续只淡入。
+const WARM = document.documentElement.hasAttribute("data-warm");
+
 function slugify(t) {
   return (
     String(t || "")
@@ -21,14 +24,15 @@ function slugify(t) {
 }
 
 function enter() {
-  if (els.preloader) {
+  if (els.preloader && !WARM) {
     els.preloader.classList.add("animate__animated", "animate__fadeOut");
     els.preloader.addEventListener("animationend", () => (els.preloader.style.display = "none"), {
       once: true,
     });
   }
   els.app.classList.remove("is-hidden");
-  els.app.classList.add("animate__animated", "animate__fadeInUp");
+  els.app.classList.add("animate__animated", WARM ? "animate__fadeIn" : "animate__fadeInUp");
+  if (WARM) els.app.style.setProperty("--animate-duration", "0.4s");
 }
 
 // 给标题设 id + 锚点，并由 h2/h3 生成目录。
@@ -105,7 +109,7 @@ async function main() {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.text();
       }),
-      delay(300),
+      delay(WARM ? 0 : 300),
     ]);
 
     els.content.innerHTML = window.marked.parse(md);

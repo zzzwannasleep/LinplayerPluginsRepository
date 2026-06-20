@@ -6,8 +6,14 @@
     <meta name="color-scheme" content="light dark" />
     <title>插件规范 · Linplayer</title>
     <link rel="icon" type="image/png" href="assets/icons/app_icon_transparent.png" />
+    <script>
+      try {
+        if (sessionStorage.getItem("lp_seen")) document.documentElement.setAttribute("data-warm", "1");
+        else sessionStorage.setItem("lp_seen", "1");
+      } catch (e) {}
+    </script>
     <link rel="stylesheet" href="assets/vendor/animate/animate.min.css" />
-    <link rel="stylesheet" href="assets/ui.css?v=3" />
+    <link rel="stylesheet" href="assets/ui.css?v=4" />
   </head>
   <body>
     <div id="preloader">
@@ -63,6 +69,6 @@
     </noscript>
 
     <script src="assets/vendor/marked/marked.min.js"></script>
-    <script type="module" src="assets/spec.js?v=2"></script>
+    <script type="module" src="assets/spec.js?v=4"></script>
   </body>
 </html>

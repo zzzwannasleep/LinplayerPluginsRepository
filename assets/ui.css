@@ -71,6 +71,8 @@ body {
 
 a { color: inherit; text-decoration: none; }
 .is-hidden { display: none !important; }
+/* 本会话已看过加载动画 → 后续页面切换不再显示全屏 loader,只淡入 */
+[data-warm] #preloader { display: none !important; }
 
 /* ---------------- Preloader ---------------- */
 #preloader {

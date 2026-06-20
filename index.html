@@ -6,9 +6,16 @@
     <meta name="color-scheme" content="light dark" />
     <title>Linplayer 插件市场</title>
     <link rel="icon" type="image/png" href="assets/icons/app_icon_transparent.png" />
+    <script>
+      // 全屏加载动画只在本会话首次显示;之后页面切换标记为 warm,只做淡入。
+      try {
+        if (sessionStorage.getItem("lp_seen")) document.documentElement.setAttribute("data-warm", "1");
+        else sessionStorage.setItem("lp_seen", "1");
+      } catch (e) {}
+    </script>
     <link rel="stylesheet" href="assets/vendor/layui/css/layui.css" />
     <link rel="stylesheet" href="assets/vendor/animate/animate.min.css" />
-    <link rel="stylesheet" href="assets/ui.css?v=2" />
+    <link rel="stylesheet" href="assets/ui.css?v=4" />
   </head>
   <body>
     <!-- 加载动画 -->
@@ -90,6 +97,6 @@
     </noscript>
 
     <script src="assets/vendor/layui/layui.js"></script>
-    <script type="module" src="assets/market.js?v=2"></script>
+    <script type="module" src="assets/market.js?v=4"></script>
   </body>
 </html>
