@@ -76,6 +76,7 @@ ctx.onEnable(async () => {
    python tools/pack_plugin.py plugins/<id>/<version>/
    # 产物 dist/<id>-<version>.lpk
    ```
+   > 插件多了用一键：`python tools/build_all.py`（先校验，再把所有插件打包到 `dist/`）。
 5. App「设置 → 插件 → +」选择该 `.lpk` 安装，同意权限后启用。
 6. 发布：把插件加入 `registry.json`（见下）。
 
