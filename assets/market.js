@@ -32,6 +32,16 @@ const els = {
 const state = { registry: null, blocked: null, plugins: [], q: "" };
 let layer = null;
 
+// 看门狗：若 8 秒后仍未进入（网络/异常/旧缓存等），给出可见提示与重试，避免无限转圈。
+setTimeout(() => {
+  if (els.app && els.app.classList.contains("is-hidden") && els.plText) {
+    els.plText.innerHTML =
+      '加载较慢或失败 · <a href="#" id="wd-retry" style="color:var(--brand);font-weight:700">点此重试</a>（仍不行请 Ctrl+F5 强制刷新）';
+    const r = document.getElementById("wd-retry");
+    if (r) r.onclick = (e) => { e.preventDefault(); location.reload(); };
+  }
+}, 8000);
+
 // ---------------- init ----------------
 async function init() {
   try {
