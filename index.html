@@ -3,143 +3,93 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="color-scheme" content="light dark" />
     <title>Linplayer 插件市场</title>
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
-    <link rel="stylesheet" href="assets/market.css" />
+    <link rel="icon" type="image/png" href="assets/icons/app_icon_transparent.png" />
+    <link rel="stylesheet" href="assets/vendor/layui/css/layui.css" />
+    <link rel="stylesheet" href="assets/vendor/animate/animate.min.css" />
+    <link rel="stylesheet" href="assets/ui.css" />
   </head>
   <body>
-    <header class="top">
-      <div class="top__inner">
-        <div class="brand">
-          <img class="brand__logo" src="assets/favicon.svg" alt="" />
-          <div class="brand__text">
-            <div class="brand__title">Linplayer 插件市场</div>
-            <div class="brand__subtitle">先读规范，再看 quickstart，再挑选插件</div>
-          </div>
-        </div>
-
-        <nav class="top__nav">
-          <a class="link" href="spec.html" target="_blank" rel="noreferrer">插件规范</a>
-          <a class="link" href="https://github.com/zzzwannasleep/LinplayerPluginsRepository" target="_blank" rel="noreferrer">GitHub</a>
-        </nav>
-      </div>
-    </header>
-
-    <main class="main">
-      <section class="panel filters">
-        <div class="sectionhead">
-          <div class="sectionhead__title">插件列表</div>
-        </div>
-
-        <div class="controls">
-          <label class="field">
-            <span class="field__label">搜索</span>
-            <input id="q" class="input" placeholder="按名称 / ID / 描述 / 标签" autocomplete="off" />
-          </label>
-
-          <label class="field">
-            <span class="field__label">端</span>
-            <select id="target" class="select">
-              <option value="all">全部</option>
-              <option value="tv">TV</option>
-              <option value="mobile">移动端</option>
-              <option value="pc">PC</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span class="field__label">通道</span>
-            <select id="channel" class="select">
-              <option value="stable">stable</option>
-              <option value="beta">beta</option>
-              <option value="dev">dev</option>
-              <option value="all">all</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span class="field__label">排序</span>
-            <select id="sort" class="select">
-              <option value="name">名称</option>
-              <option value="id">ID</option>
-              <option value="version">最新版本</option>
-            </select>
-          </label>
-
-          <label class="check">
-            <input id="showBlocked" type="checkbox" checked />
-            <span>显示已下架</span>
-          </label>
-        </div>
-
-        <div id="status" class="status">
-          <div class="status__left">
-            <span id="count">0</span> 个插件
-            <span class="dot">•</span>
-            registry 更新于 <span id="updatedAt">-</span>
-          </div>
-          <div class="status__right" id="warn"></div>
-        </div>
-      </section>
-
-      <section class="catalog">
-        <div id="list" class="grid"></div>
-      </section>
-
-      <section class="footnote">
-        <details>
-          <summary>免责声明</summary>
-          <p>本仓库插件由社区贡献，仅供学习交流。插件可能访问第三方站点并返回不稳定结果。请在合法合规前提下使用。仓库维护者不对插件内容与由此带来的损失承担责任。</p>
-        </details>
-      </section>
-    </main>
-
-    <div id="modal" class="modal" aria-hidden="true">
-      <div class="modal__overlay" data-close="1"></div>
-      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <div class="modal__header">
-          <div>
-            <div id="modalTitle" class="modal__title"></div>
-            <div id="modalSub" class="modal__sub"></div>
-          </div>
-          <button class="iconbtn" title="关闭" data-close="1">×</button>
-        </div>
-
-        <div class="modal__body">
-          <div id="modalBadges" class="badges"></div>
-          <p id="modalDesc" class="modal__desc"></p>
-
-          <h3 class="h3">版本</h3>
-          <div class="tablewrap">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>channel</th>
-                  <th>version</th>
-                  <th>minHost</th>
-                  <th>下载 / 清单</th>
-                </tr>
-              </thead>
-              <tbody id="modalVersions"></tbody>
-            </table>
-          </div>
-
-          <div id="modalBlocked" class="blocked"></div>
-        </div>
-
-        <div class="modal__footer">
-          <button class="btn" data-close="1">关闭</button>
-        </div>
-      </div>
+    <!-- 加载动画 -->
+    <div id="preloader">
+      <img
+        class="pl-logo animate__animated animate__pulse animate__infinite"
+        src="assets/icons/app_icon_transparent.png"
+        alt="Linplayer"
+      />
+      <div class="pl-bar"></div>
+      <div class="pl-text" id="plText">正在加载插件市场…</div>
     </div>
 
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <!-- 主体（数据就绪后进入动画显示） -->
+    <div id="app" class="is-hidden">
+      <header class="topbar">
+        <div class="topbar__inner">
+          <div class="brand">
+            <img class="brand__logo" src="assets/icons/app_icon_transparent.png" alt="" />
+            <div>
+              <div class="brand__title">Linplayer 插件市场</div>
+              <div class="brand__sub">挑选插件，下载 .ipk，在 App 内安装</div>
+            </div>
+          </div>
+          <nav class="nav">
+            <a href="index.html" class="is-active">插件市场</a>
+            <a href="guide.html">开发指南</a>
+            <a href="spec.html">插件规范</a>
+            <a
+              href="https://github.com/zzzwannasleep/LinplayerPluginsRepository"
+              target="_blank"
+              rel="noreferrer"
+              >GitHub</a
+            >
+          </nav>
+        </div>
+      </header>
+
+      <main class="wrap">
+        <div class="toolbar">
+          <label class="search">
+            <i class="ico layui-icon layui-icon-search"></i>
+            <input id="q" placeholder="搜索插件：名称 / ID / 描述 / 标签" autocomplete="off" />
+          </label>
+          <div class="count">
+            <b id="count">0</b> 个插件 · 更新于 <span id="updatedAt">-</span>
+          </div>
+        </div>
+
+        <div id="warn" class="warn is-hidden"></div>
+
+        <div class="layui-tab layui-tab-brief" lay-filter="marketTabs">
+          <ul class="layui-tab-title">
+            <li class="layui-this" lay-id="pc">PC 端</li>
+            <li lay-id="mobile">移动端</li>
+            <li lay-id="tv">TV 端</li>
+          </ul>
+          <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show"><div id="grid-pc" class="cardgrid"></div></div>
+            <div class="layui-tab-item"><div id="grid-mobile" class="cardgrid"></div></div>
+            <div class="layui-tab-item"><div id="grid-tv" class="cardgrid"></div></div>
+          </div>
+        </div>
+
+        <div class="foot">
+          <details>
+            <summary>免责声明</summary>
+            <p>
+              本仓库插件由社区贡献，仅供学习交流。插件可能访问第三方站点并返回不稳定结果。
+              请在合法合规前提下使用。维护者不对插件内容及由此带来的损失负责。
+            </p>
+          </details>
+        </div>
+      </main>
+    </div>
 
     <noscript>
-      <div class="noscript">该页面需要启用 JavaScript 才能加载插件列表。</div>
+      <div style="padding: 24px; text-align: center">该页面需要启用 JavaScript 才能加载插件列表。</div>
     </noscript>
 
+    <script src="assets/vendor/layui/layui.js"></script>
     <script type="module" src="assets/market.js"></script>
   </body>
 </html>

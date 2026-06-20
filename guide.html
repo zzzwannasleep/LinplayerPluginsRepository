@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>开发指南 · Linplayer 插件</title>
+    <link rel="icon" type="image/png" href="assets/icons/app_icon_transparent.png" />
+    <link rel="stylesheet" href="assets/vendor/layui/css/layui.css" />
+    <link rel="stylesheet" href="assets/vendor/animate/animate.min.css" />
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div id="preloader">
+      <img
+        class="pl-logo animate__animated animate__pulse animate__infinite"
+        src="assets/icons/app_icon_transparent.png"
+        alt="Linplayer"
+      />
+      <div class="pl-bar"></div>
+      <div class="pl-text">正在加载开发指南…</div>
+    </div>
+
+    <div id="app" class="is-hidden">
+      <header class="topbar">
+        <div class="topbar__inner">
+          <div class="brand">
+            <img class="brand__logo" src="assets/icons/app_icon_transparent.png" alt="" />
+            <div>
+              <div class="brand__title">插件开发指南</div>
+              <div class="brand__sub">写两个文件，跑一条命令，发布到市场</div>
+            </div>
+          </div>
+          <nav class="nav">
+            <a href="index.html">插件市场</a>
+            <a href="guide.html" class="is-active">开发指南</a>
+            <a href="spec.html">插件规范</a>
+            <a
+              href="https://github.com/zzzwannasleep/LinplayerPluginsRepository"
+              target="_blank"
+              rel="noreferrer"
+              >GitHub</a
+            >
+          </nav>
+        </div>
+      </header>
+
+      <main class="wrap">
+        <div class="doc">
+          <section class="gcard">
+            <h2>开始之前</h2>
+            <p>
+              一个插件就是跑在 App 内 <strong>QuickJS 沙箱</strong>里的一段 JavaScript，
+              通过受权限控制的全局对象 <code>ctx</code> 与宿主交互（读播放状态、发 HTTP、存数据、
+              挂 UI 扩展点等）。最少只需要两个文件：<strong>manifest.json</strong> +
+              <strong>main.js</strong>。完整 API 见 <a href="spec.html">插件规范</a>。
+            </p>
+            <div class="callout">
+              只想快速上手？直接抄
+              <a href="plugins/com.linplayer.hello/1.0.0/" target="_blank" rel="noreferrer"
+                >com.linplayer.hello</a
+              >
+              这个最小示例。
+            </div>
+          </section>
+
+          <section class="gcard">
+            <h2><span class="step">1</span> 写 manifest.json</h2>
+            <p>
+              声明插件身份、申请的<strong>权限</strong>和要挂载的<strong>扩展点</strong>。
+              目录名必须等于 <code>id</code>/<code>version</code>。市场展示用的
+              <code>tags</code>/<code>targets</code> 等也写在这里——manifest 是唯一元数据源。
+              字段定义见 <code>schemas/manifest.schema.json</code>。
+            </p>
+            <pre>{
+  "id": "com.example.hello",
+  "version": "1.0.0",
+  "name": "我的插件",
+  "description": "干什么用的",
+  "tags": ["demo"],
+  "targets": ["pc", "mobile", "tv"],
+  "permissions": ["ui", "storage", "extensions"],
+  "extends": {
+    "settingsPages": [{ "id": "settings", "title": "设置", "handler": "openSettings" }]
+  }
+}</pre>
+          </section>
+
+          <section class="gcard">
+            <h2><span class="step">2</span> 写 main.js</h2>
+            <p>
+              顶层代码加载即运行。用 <code>ctx.onEnable</code> 注册扩展点、监听播放事件、
+              读写存储。下面是一个在首页显示问候、并提供设置页改称呼的最小例子：
+            </p>
+            <pre>'use strict';
+
+async function homeMetric() {
+  const name = (await ctx.storage.get('name')) || 'World';
+  return { metrics: [{ label: '问候', value: 'Hello, ' + name }] };
+}
+
+async function openSettings() {
+  const v = await ctx.ui.showForm({
+    title: '设置',
+    fields: [{ key: 'name', label: '称呼', type: 'text', default: '' }]
+  });
+  if (!v) return;
+  await ctx.storage.set('name', v.name || 'World');
+  ctx.ui.showToast('已保存');
+}
+
+ctx.onEnable(async () => {
+  await ctx.extensions.register('homeStats', { id: 'hi', title: '问候', handler: homeMetric });
+});</pre>
+          </section>
+
+          <section class="gcard">
+            <h2>ctx API 速览</h2>
+            <table class="gtable">
+              <tr><th>命名空间</th><th>能力</th></tr>
+              <tr><td><code>ctx.log</code></td><td>打日志</td></tr>
+              <tr><td><code>ctx.http</code></td><td>受白名单/HTTPS 约束的网络请求（需 <code>http</code> 权限）</td></tr>
+              <tr><td><code>ctx.storage</code></td><td>插件私有键值存储</td></tr>
+              <tr><td><code>ctx.player</code></td><td>读播放状态、监听播放事件、控制播放</td></tr>
+              <tr><td><code>ctx.ui</code></td><td>Toast、表单、对话框等界面交互</td></tr>
+              <tr><td><code>ctx.emby</code></td><td>读 Emby 数据 / 调 API / 账密（按权限）</td></tr>
+              <tr><td><code>ctx.extensions</code></td><td>注册扩展点：homeStats / sidebarItems / actions / settingsPages …</td></tr>
+              <tr><td><code>ctx.sleep</code></td><td>等待若干毫秒</td></tr>
+            </table>
+            <div class="callout">完整签名、扩展点字段与权限模型见 <a href="spec.html">插件规范（SPEC）</a>。</div>
+          </section>
+
+          <section class="gcard">
+            <h2><span class="step">3</span> 打包成 .ipk</h2>
+            <p>把插件放到 <code>plugins/&lt;id&gt;/&lt;version&gt;/</code> 后，一条命令搞定校验 + 索引 + 打包：</p>
+            <pre>python tools/build.py
+<span class="c"># 校验 + 自动生成 registry.json + 打包所有 packages/&lt;id&gt;-&lt;version&gt;.ipk
+# 只打单个：python tools/pack_plugin.py plugins/&lt;id&gt;/&lt;version&gt;/</span></pre>
+            <p>
+              <code>.ipk</code> 就是个 zip（包根含 manifest.json + main.js）。本地自测：
+              App「设置 → 插件 → +」选这个 <code>.ipk</code> 安装，同意权限后启用。
+            </p>
+          </section>
+
+          <section class="gcard">
+            <h2><span class="step">4</span> 发布到市场</h2>
+            <p>流程很短，<strong>registry.json 全自动生成、永远不要手改</strong>：</p>
+            <ol>
+              <li>插件放到 <code>plugins/&lt;id&gt;/&lt;version&gt;/</code>；</li>
+              <li>跑 <code>python tools/build.py</code>（自动更新 <code>registry.json</code> + 生成 <code>packages/*.ipk</code>）；</li>
+              <li><code>git commit</code> 后推送——市场页会自动收录，并给出「下载 .ipk」直链；</li>
+              <li>要下架某插件/版本：写进 <code>blocked.json</code>（这是唯一需要手动维护的索引）。</li>
+            </ol>
+          </section>
+
+          <section class="gcard">
+            <h2>示例插件</h2>
+            <table class="gtable">
+              <tr><th>插件</th><th>演示</th></tr>
+              <tr><td><a href="plugins/com.linplayer.hello/1.0.0/" target="_blank" rel="noreferrer">com.linplayer.hello</a></td><td>最小教程：homeStats + 设置表单（先看这个）</td></tr>
+              <tr><td><a href="plugins/com.linplayer.telegram-notify/1.0.0/" target="_blank" rel="noreferrer">telegram-notify</a></td><td>监听 onPlayEnd + ctx.http + 设置表单</td></tr>
+              <tr><td><a href="plugins/com.linplayer.uhdnow-traffic/1.0.0/" target="_blank" rel="noreferrer">uhdnow-traffic</a></td><td>emby 检测 + 账密自动登录 + 首页流量统计</td></tr>
+            </table>
+          </section>
+
+          <div class="foot">
+            <p>
+              完整 API：<a href="spec.html" style="color: var(--brand)">插件规范</a> ·
+              <a href="https://github.com/zzzwannasleep/LinplayerPluginsRepository" target="_blank" rel="noreferrer" style="color: var(--brand)">GitHub</a>
+            </p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="assets/guide.js"></script>
+  </body>
+</html>

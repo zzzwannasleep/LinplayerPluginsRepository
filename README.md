@@ -111,9 +111,12 @@ ctx.onEnable(async () => {
 
 ## 网页市场（Cloudflare Pages）
 
-根目录 `index.html` 是零依赖静态页，自动读 `registry.json` / `blocked.json`，
-支持搜索、按端筛选、**下载 .ipk 安装包**（`packages/*.ipk` 已在版本库里直接托管）。部署：仓库连到 Pages，Build command 留空，
-输出目录 `.`。
+静态站，无构建步骤。三页：`index.html`（市场，按 PC/移动/TV 三端 Tab 分类 + 搜索 +
+**下载 .ipk**）、`guide.html`（开发指南）、`spec.html`（规范阅读版）。市场自动读
+`registry.json` / `blocked.json`；安装包 `packages/*.ipk` 已在版本库里直接托管。
+UI 用 **layui** + **Animate.css**（已自托管在 `assets/vendor/`，含加载/进入动画、
+跟随系统深浅主题）；站点图标用应用图标 `assets/icons/app_icon_transparent.png`。
+部署：仓库连到 Pages，Build command 留空，输出目录 `.`。
 
 ## 免责声明
 
