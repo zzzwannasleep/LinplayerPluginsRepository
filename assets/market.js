@@ -424,6 +424,8 @@ function bind() {
   elements.showBlocked.addEventListener("change", sync);
 
   elements.list.addEventListener("click", async (e) => {
+    // 点卡片内的链接（如「下载 .ipk」）只触发该链接，不再连带打开详情。
+    if (e.target.closest("a")) return;
     const btn = e.target.closest("button");
     const card = e.target.closest(".card");
     if (!card) return;
