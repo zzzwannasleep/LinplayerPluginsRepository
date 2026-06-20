@@ -9,11 +9,13 @@ LinPlayer 的插件市场仓库：存放插件文件、市场索引、规范文�
 ## 仓库结构
 
 ```
-plugins/<id>/<version>/   插件文件，一个插件一个目录，按版本归档
-registry.json             市场索引（网页展示 + 客户端查更新）
-blocked.json              下架/禁用清单（kill switch）
+plugins/<id>/<version>/   插件源码，一个插件一个目录，按版本归档（manifest=唯一元数据源）
+packages/<id>-<ver>.ipk   打包好的安装包（build.py 生成，供市场直接下载）
+registry.json             市场索引（build.py 自动生成，勿手改）
+blocked.json              下架/禁用清单（kill switch，手动维护）
 schemas/                  JSON Schema（manifest / registry / blocked）
-tools/                    校验与打包脚本
+tools/build.py            一键：校验 + 生成 registry + 打包所有 .ipk
+tools/{pack_plugin,validate_repo}.py  单步打包 / 校验
 SPEC.md                   插件规范（完整 API）
 index.html                零依赖的静态市场页（Cloudflare Pages）
 ```
@@ -65,52 +67,39 @@ ctx.onEnable(async () => {
 
 ## 开发流程
 
+只有两步：写插件 → 跑 `build.py`。`registry.json` 和安装包 `packages/*.ipk` **全自动生成，
+不用手碰**。
+
 1. 新建目录 `plugins/<id>/<version>/`（目录名要和 manifest 的 `id`/`version` 一致）。
 2. 照 `com.linplayer.hello` 写 `manifest.json` + `main.js`（可选 `icon.svg`、`README.md`）。
-3. 本地校验：
+   市场展示用的 `tags`/`targets`、`channel`/`apiVersion`/`minHostVersion` 直接写进
+   **manifest**（manifest 是唯一元数据源；不写则用默认值）。
+3. 构建：
    ```bash
-   python tools/validate_repo.py
+   python tools/build.py
    ```
-4. 打包成 `.lpk` 自测：
-   ```bash
-   python tools/pack_plugin.py plugins/<id>/<version>/
-   # 产物 dist/<id>-<version>.lpk
-   ```
-   > 插件多了用一键：`python tools/build_all.py`（先校验，再把所有插件打包到 `dist/`）。
-5. App「设置 → 插件 → +」选择该 `.lpk` 安装，同意权限后启用。
-6. 发布：把插件加入 `registry.json`（见下）。
+   它会：① 校验（目录名/入口文件一致）；② 由所有 manifest **自动生成 `registry.json`**；
+   ③ 把每个插件打包成 **`packages/<id>-<version>.ipk`**。
+4. 自测：App「设置 → 插件 → +」选 `packages/<id>-<version>.ipk` 安装，同意权限后启用。
+5. 发布：`git commit` 后推送即可——市场页会自动列出，并给出 `.ipk` 直接下载。
 
-## 发布到市场
+> `.ipk` 就是个 zip（包根含 `manifest.json` + `main.js`），等同 `.apk`/`.ipa` 的安装包形态。
+> 旧的 `.lpk` 仍兼容安装。
 
-在 `registry.json` 的 `plugins[]` 里加一条，`versions[].manifestUrl` 指向该版本的
-`manifest.json`（raw 链接）：
+## 发布到市场（全自动）
 
-```jsonc
-{
-  "id": "com.example.foo",
-  "name": "我的插件",
-  "description": "...",
-  "author": { "name": "你" },
-  "tags": ["demo"],
-  "targets": ["pc", "mobile"],            // 市场筛选用：tv / mobile / pc
-  "versions": [{
-    "version": "1.0.0",
-    "channel": "stable",
-    "apiVersion": 1,
-    "minHostVersion": "1.0.0",
-    "manifestUrl": "https://raw.githubusercontent.com/<owner>/<repo>/<ref>/plugins/com.example.foo/1.0.0/manifest.json"
-  }]
-}
-```
+**不再手工维护 `registry.json`**。`tools/build.py` 扫描 `plugins/*/*/manifest.json`
+自动生成它：`name`/`description`/`author`/`tags`/`targets` 取自 manifest，
+`manifestUrl`/`packageUrl` 自动拼成 raw 链接。你只管写 manifest + 跑 build。
 
-建议 `<ref>` 用 tag 或 commit SHA，不要用 `main`（内容可变，削弱完整性）。
-下架某插件/版本：写进 `blocked.json`。
+- 安装包 `packages/*.ipk` 已纳入版本库，市场页每个版本都有「**下载 .ipk**」直链，
+  用户点一下就拿到安装包直接装。
+- 下架某插件/版本：写进 `blocked.json`（手动；这是唯一需要手改的索引文件）。
 
 ## 安装方式
 
-当前 App 通过本地 `.lpk` 安装（设置 → 插件 → +）。把
-`plugins/<id>/<version>/` 目录用 `tools/pack_plugin.py` 打成 `.lpk` 即可。
-（市场页的「复制安装链接」给出的是 `manifestUrl`，用于浏览与未来的在线安装。）
+- **市场下载**：网页市场每个插件/版本有「下载 .ipk」按钮，下载即安装包。
+- **本地安装**：App「设置 → 插件 → +」选 `.ipk`（兼容旧 `.lpk`/`.zip`）。
 
 ## 示例插件
 
@@ -123,7 +112,7 @@ ctx.onEnable(async () => {
 ## 网页市场（Cloudflare Pages）
 
 根目录 `index.html` 是零依赖静态页，自动读 `registry.json` / `blocked.json`，
-支持搜索、按端筛选、复制安装链接。部署：仓库连到 Pages，Build command 留空，
+支持搜索、按端筛选、**下载 .ipk 安装包**（`packages/*.ipk` 已在版本库里直接托管）。部署：仓库连到 Pages，Build command 留空，
 输出目录 `.`。
 
 ## 免责声明

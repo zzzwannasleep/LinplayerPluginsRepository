@@ -1,5 +1,6 @@
 external/
+__pycache__/
 
-# 打包产物（tools/pack_plugin.py 输出，可随时重建）
+# 旧/临时打包目录与旧格式产物。正式发布的安装包在 packages/（已纳入版本库，供市场直接下载）。
 dist/
 *.lpk

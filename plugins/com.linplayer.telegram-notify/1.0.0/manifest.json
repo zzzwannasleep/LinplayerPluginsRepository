@@ -6,6 +6,11 @@
   "description": "每播放完一集，自动通过 Telegram Bot 发送通知。可在设置中填写 Bot Token 和 Chat ID。",
   "main": "main.js",
   "homepage": "https://github.com/linplayer/plugins",
+  "tags": ["notify", "telegram", "player"],
+  "targets": ["mobile", "pc", "tv"],
+  "channel": "stable",
+  "apiVersion": 1,
+  "minHostVersion": "1.0.0",
   "permissions": ["player.read", "http", "storage", "ui", "extensions"],
   "httpAllowedHosts": ["api.telegram.org"],
   "extends": {

@@ -38,6 +38,18 @@
       "maxItems": 30,
       "uniqueItems": true
     },
+    "targets": {
+      "type": "array",
+      "description": "市场筛选用：该插件适配的端。",
+      "items": { "type": "string", "enum": ["tv", "mobile", "pc"] },
+      "uniqueItems": true
+    },
+    "channel": { "type": "string", "enum": ["stable", "beta", "dev"] },
+    "apiVersion": { "type": "integer", "minimum": 1 },
+    "minHostVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
     "license": { "type": "string", "maxLength": 80 },
     "permissions": {
       "type": "array",

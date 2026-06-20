@@ -1,55 +1,85 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-06-15T00:00:00Z",
+  "updatedAt": "2026-06-20T09:48:45Z",
   "plugins": [
     {
       "id": "com.linplayer.hello",
       "name": "Hello 示例",
-      "description": "最小教程型插件：首页问候 + 设置页。照抄起步用。",
-      "author": { "name": "LinPlayer" },
-      "tags": ["demo", "guide"],
-      "targets": ["pc", "mobile"],
+      "description": "最小教程型插件：在首页统计旁显示一句问候，并提供一个设置页修改称呼。适合照抄起步。",
+      "author": {
+        "name": "LinPlayer"
+      },
+      "tags": [
+        "demo",
+        "guide"
+      ],
+      "targets": [
+        "pc",
+        "mobile"
+      ],
       "versions": [
         {
           "version": "1.0.0",
           "channel": "stable",
           "apiVersion": 1,
           "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.hello/1.0.0/manifest.json"
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.hello/1.0.0/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.hello-1.0.0.ipk"
         }
       ]
     },
     {
       "id": "com.linplayer.telegram-notify",
       "name": "Telegram 播放通知",
-      "description": "每播放完一集自动通过 Telegram Bot 发送通知。",
-      "author": { "name": "LinPlayer" },
-      "tags": ["notify", "telegram", "player"],
-      "targets": ["mobile", "pc", "tv"],
+      "description": "每播放完一集，自动通过 Telegram Bot 发送通知。可在设置中填写 Bot Token 和 Chat ID。",
+      "author": {
+        "name": "LinPlayer"
+      },
+      "tags": [
+        "notify",
+        "telegram",
+        "player"
+      ],
+      "targets": [
+        "mobile",
+        "pc",
+        "tv"
+      ],
       "versions": [
         {
           "version": "1.0.0",
           "channel": "stable",
           "apiVersion": 1,
           "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.telegram-notify/1.0.0/manifest.json"
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.telegram-notify/1.0.0/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.telegram-notify-1.0.0.ipk"
         }
       ]
     },
     {
       "id": "com.linplayer.uhdnow-traffic",
       "name": "UHDNow 流量统计",
-      "description": "uhdnow 服务器在首页媒体计数旁显示剩余/总流量（账密自动登录）。",
-      "author": { "name": "LinPlayer" },
-      "tags": ["uhdnow", "traffic", "homeStats"],
-      "targets": ["pc", "mobile"],
+      "description": "当 Emby 服务器地址包含关键字 uhdnow 时，在首页媒体计数（电影/剧集/总共）旁边显示账户的总流量与剩余流量。",
+      "author": {
+        "name": "LinPlayer"
+      },
+      "tags": [
+        "uhdnow",
+        "traffic",
+        "homeStats"
+      ],
+      "targets": [
+        "pc",
+        "mobile"
+      ],
       "versions": [
         {
           "version": "1.0.0",
           "channel": "stable",
           "apiVersion": 1,
           "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-traffic/1.0.0/manifest.json"
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-traffic/1.0.0/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-traffic-1.0.0.ipk"
         }
       ]
     }

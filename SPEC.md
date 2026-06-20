@@ -19,7 +19,7 @@ plugins/<id>/<version>/
 └── icon.svg          # 可选，图标
 ```
 
-打包成 `.lpk`（zip）后由 App「设置 → 插件 → +」安装。
+用 `python tools/build.py` 打包成 `.ipk`（zip）后由 App「设置 → 插件 → +」安装。
 
 ---
 
@@ -189,14 +189,15 @@ ctx.onDisable(() => { /* 禁用前 */ });
 
 ## 8. 打包与安装
 
-`.lpk` 就是包含 `manifest.json` + `main.js`(+图标) 的 zip：
+`.ipk` 就是包含 `manifest.json` + `main.js`(+图标) 的 zip：
 
 ```bash
-python tools/pack_plugin.py plugins/<id>/<version>/
-# 产物 dist/<id>-<version>.lpk
+python tools/build.py     # 一键：校验 + 生成 registry + 打包所有插件
+# 产物 packages/<id>-<version>.ipk
+# 单个打包：python tools/pack_plugin.py plugins/<id>/<version>/
 ```
 
-安装：App「设置 → 插件 → +」选择 `.lpk` → 同意权限 → 启用。
+安装：App「设置 → 插件 → +」选择 `.ipk`（兼容旧 `.lpk`）→ 同意权限 → 启用。
 
 ---
 

@@ -291,7 +291,9 @@ function renderList() {
         </div>
 
         <div class="card__actions">
-          <button class="btn primary" data-action="copy" ${blocked ? "disabled" : ""}>复制安装链接</button>
+          ${best && best.packageUrl && !blocked
+            ? `<a class="btn primary" href="${escapeHtml(best.packageUrl)}" download>下载 .ipk</a>`
+            : `<button class="btn primary" disabled>下载 .ipk</button>`}
           <button class="btn" data-action="details">详情</button>
         </div>
       </article>
@@ -355,6 +357,7 @@ function openModal(pluginId) {
       const ch = String(v.channel ?? "stable");
       const minHost = String(v.minHostVersion ?? "-");
       const url = String(v.manifestUrl ?? "");
+      const pkg = String(v.packageUrl ?? "");
       const blockedV = isVersionBlocked(pluginId, ver);
       const blocked = blockedP || blockedV;
       return `
@@ -364,7 +367,8 @@ function openModal(pluginId) {
           <td>${escapeHtml(minHost)}</td>
           <td>
             <div class="install">
-              <button class="btn" data-copy="${escapeHtml(url)}" ${blocked ? "disabled" : ""}>复制</button>
+              ${pkg && !blocked ? `<a class="btn primary" href="${escapeHtml(pkg)}" download>下载 .ipk</a>` : ""}
+              <button class="btn" data-copy="${escapeHtml(url)}" ${blocked ? "disabled" : ""}>清单</button>
               <a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">打开</a>
             </div>
           </td>
