@@ -8,7 +8,7 @@
   "icon": "icon.svg",
   "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository",
   "tags": ["cloudflare", "优选", "反代", "加速", "network"],
-  "targets": ["pc", "mobile"],
+  "targets": ["pc", "mobile", "tv"],
   "channel": "stable",
   "apiVersion": 1,
   "minHostVersion": "1.0.0",

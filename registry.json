@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-06-25T10:44:00Z",
+  "updatedAt": "2026-06-25T11:21:50Z",
   "plugins": [
     {
       "id": "com.linplayer.cf-proxy",
@@ -18,7 +18,8 @@
       ],
       "targets": [
         "pc",
-        "mobile"
+        "mobile",
+        "tv"
       ],
       "versions": [
         {
