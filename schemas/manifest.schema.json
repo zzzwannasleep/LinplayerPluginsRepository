@@ -67,6 +67,7 @@
           "emby.api",
           "emby.credentials",
           "extensions",
+          "cfproxy",
           "log"
         ]
       }

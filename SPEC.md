@@ -65,6 +65,7 @@ plugins/<id>/<version>/
 | `emby.read` | 读当前用户、服务器地址/名称 |
 | `emby.api` | 以当前登录身份调用 Emby 接口 |
 | `emby.credentials` | 读添加服务器时填写的账号密码（用于登录配套网站） |
+| `cfproxy` | Cloudflare 优选 IP 测速 + 本地反代（把服务器线路改写到本地反代） |
 | `extensions` | 注册扩展点 |
 | `log` | 写日志（始终允许，无需声明） |
 
@@ -126,6 +127,21 @@ await ctx.emby.getServerInfo();   // 需 emby.read -> { url, baseUrl, name, user
 await ctx.emby.getCurrentUser();  // 需 emby.read -> { id, name }
 await ctx.emby.getCredentials();  // 需 emby.credentials -> { username, password, url }
 await ctx.emby.apiRequest({ method, path, query, body }); // 需 emby.api -> { status, body }
+```
+
+### ctx.cfproxy（需 `cfproxy`）
+
+Cloudflare 优选 IP 测速 + 本地反代。重活（测速/反代/定时）都在宿主完成，插件只编排。
+
+```js
+await ctx.cfproxy.listServers();   // [{id,name,host,url,active,pinnedIp,latencyMs,downloadKBps,scheduleEnabled,scheduleMinutes}]
+await ctx.cfproxy.getStatus();     // { active:[{id,name,pinnedIp,latencyMs,downloadKBps,scheduleEnabled}] }
+await ctx.cfproxy.openPanel();     // 打开宿主可视化面板（推荐入口，自带实时测速进度）
+await ctx.cfproxy.speedTest(id);   // 对某服务器测速并应用最优 IP -> 最优结果或 null
+await ctx.cfproxy.disable(id);     // 关闭某服务器反代，恢复直连
+await ctx.cfproxy.setSchedule(id, true, 30); // 定时测速（分钟）
+await ctx.cfproxy.restore();       // 按持久化配置恢复（通常在 onEnable）
+await ctx.cfproxy.teardown();      // 拆除全部反代（通常在 onDisable）
 ```
 
 ### ctx.extensions（需 `extensions`）

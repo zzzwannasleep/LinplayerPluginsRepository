@@ -1,7 +1,36 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-06-20T09:48:45Z",
+  "updatedAt": "2026-06-25T10:44:00Z",
   "plugins": [
+    {
+      "id": "com.linplayer.cf-proxy",
+      "name": "CF 优选反代",
+      "description": "为走 Cloudflare 的服务器线路，从本地实测挑出最快的 CF 边缘 IP 并启用本地反代改写线路；比公共优选 IP 更贴合你的网络。支持定时测速，全天候保速。",
+      "author": {
+        "name": "LinPlayer"
+      },
+      "tags": [
+        "cloudflare",
+        "优选",
+        "反代",
+        "加速",
+        "network"
+      ],
+      "targets": [
+        "pc",
+        "mobile"
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "channel": "stable",
+          "apiVersion": 1,
+          "minHostVersion": "1.0.0",
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.cf-proxy/1.0.0/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.cf-proxy-1.0.0.ipk"
+        }
+      ]
+    },
     {
       "id": "com.linplayer.hello",
       "name": "Hello 示例",

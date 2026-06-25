@@ -10,7 +10,7 @@ SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Z
 
 KNOWN_PERMS = {
     "player.read", "player.control", "http", "storage", "ui",
-    "emby.read", "emby.api", "emby.credentials", "extensions", "log",
+    "emby.read", "emby.api", "emby.credentials", "extensions", "cfproxy", "log",
 }
 KNOWN_EXT_POINTS = {
     "sidebarItems", "mediaSources", "actions", "eventListeners",
