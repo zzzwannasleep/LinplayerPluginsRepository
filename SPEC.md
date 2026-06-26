@@ -101,6 +101,7 @@ await ctx.storage.clear();
 ```js
 const media = await ctx.player.getCurrentMedia();
 // { id, name, type, seriesName, indexNumber, parentIndexNumber, overview, ... }
+await ctx.player.getCacheLimitBytes(); // 需 player.read -> 用户设置的视频缓存上限(字节)
 await ctx.player.play();
 await ctx.player.pause();
 await ctx.player.seek(seconds);
@@ -126,7 +127,11 @@ await ctx.emby.getServerUrl();    // 需 emby.read
 await ctx.emby.getServerInfo();   // 需 emby.read -> { url, baseUrl, name, username, userId }
 await ctx.emby.getCurrentUser();  // 需 emby.read -> { id, name }
 await ctx.emby.getCredentials();  // 需 emby.credentials -> { username, password, url }
-await ctx.emby.apiRequest({ method, path, query, body }); // 需 emby.api -> { status, body }
+await ctx.emby.apiRequest({ method, path, query, body, headers, discardBody });
+// 需 emby.api -> { status, body }
+//   headers     可选，自定义请求头（如 Range，用于分段预热当前流；token 仍自动注入）
+//   discardBody 可选，true 时按流丢弃响应体、不读进 isolate，返回 { status, bytes }
+//               （用于多线程预热缓存，避免大段二进制撑爆 64MB 内存）
 ```
 
 ### ctx.cfproxy（需 `cfproxy`）
