@@ -1,0 +1,20 @@
+{
+  "id": "com.linplayer.uhdnow-traffic-addon",
+  "version": "1.0.0",
+  "name": "UHDNow 流量统计 (iOS · Addon)",
+  "author": "LinPlayer",
+  "description": "iOS 远程 addon 示例：登录换 token、算剩余流量等有状态/需计算的逻辑在远程服务执行，App 只按协议收 homeStats JSON。服务端实现见 oauth-proxy/functions/api/addon/uhdnow/（凭据存 KV 命名空间 ADDON_KV，按 serverUrl 存，可多账号/热更新；单账号可用环境变量 UHDNOW_USERNAME/PASSWORD 回退）。把 baseUrl 与 httpAllowedHosts 换成你部署的 oauth-proxy 域名。",
+  "minAppVersion": "1.1.0",
+  "tags": ["uhdnow", "traffic", "homeStats", "addon", "ios"],
+  "targets": ["ios"],
+  "runtime": "addon",
+  "channel": "stable",
+  "apiVersion": 1,
+  "minHostVersion": "1.1.0",
+  "permissions": ["http", "emby.read"],
+  "httpAllowedHosts": ["linplayer-oauth.pages.dev"],
+  "addon": {
+    "baseUrl": "https://linplayer-oauth.pages.dev/api/addon/uhdnow",
+    "resources": ["homeStats"]
+  }
+}

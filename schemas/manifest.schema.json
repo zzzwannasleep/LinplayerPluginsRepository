@@ -40,8 +40,8 @@
     },
     "targets": {
       "type": "array",
-      "description": "市场筛选用：该插件适配的端。",
-      "items": { "type": "string", "enum": ["tv", "mobile", "pc"] },
+      "description": "市场筛选用：该插件适配的端。注意：ios 端受 App Store 政策限制，不能执行下载来的 main.js，iOS 专用插件须为数据驱动/声明式形态（非可执行 JS）。",
+      "items": { "type": "string", "enum": ["tv", "mobile", "pc", "ios"] },
       "uniqueItems": true
     },
     "channel": { "type": "string", "enum": ["stable", "beta", "dev"] },
@@ -92,9 +92,131 @@
         "contextMenus": { "$ref": "#/$defs/extList" },
         "homeStats": { "$ref": "#/$defs/extList" }
       }
+    },
+    "runtime": {
+      "type": "string",
+      "description": "插件运行时形态。js=可执行 JS(main.js，默认，桌面/安卓/TV)；data=声明式数据驱动(App 内置解释器执行，iOS 合规)；addon=远程 addon 服务(App 按协议收发 JSON，iOS 合规)。凡 targets 含 ios 必须为 data 或 addon。",
+      "enum": ["js", "data", "addon"],
+      "default": "js"
+    },
+    "data": {
+      "type": "object",
+      "description": "runtime=data 时的声明式规则(无可执行代码)。模板插值支持 {serverUrl} {cfg.KEY} {media.FIELD}；path 为响应 JSON 的点路径。",
+      "additionalProperties": false,
+      "properties": {
+        "settings": {
+          "type": "array",
+          "description": "用户可填配置，值以 {cfg.KEY} 引用。",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "label"],
+            "properties": {
+              "key": { "type": "string", "maxLength": 60 },
+              "label": { "type": "string", "maxLength": 80 },
+              "type": { "type": "string", "enum": ["text", "password", "number", "switch"] },
+              "default": {},
+              "hint": { "type": "string", "maxLength": 200 }
+            }
+          }
+        },
+        "homeStats": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["request", "metrics"],
+          "properties": {
+            "when": { "$ref": "#/$defs/whenGate" },
+            "request": { "$ref": "#/$defs/dataRequest" },
+            "metrics": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["label", "path"],
+                "properties": {
+                  "label": { "type": "string", "maxLength": 80 },
+                  "path": { "type": "string", "maxLength": 200 },
+                  "suffix": { "type": "string", "maxLength": 20 }
+                }
+              }
+            }
+          }
+        },
+        "onEvent": {
+          "type": "array",
+          "description": "播放事件触发的请求(如播完发通知)。",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["event", "request"],
+            "properties": {
+              "event": { "type": "string", "enum": ["onPlay", "onPause", "onPlayEnd"] },
+              "request": { "$ref": "#/$defs/dataRequest" }
+            }
+          }
+        },
+        "mediaSource": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "maxLength": 80 },
+            "catalog": { "$ref": "#/$defs/dataList" },
+            "search": { "$ref": "#/$defs/dataList" }
+          }
+        }
+      }
+    },
+    "addon": {
+      "type": "object",
+      "description": "runtime=addon 时的远程服务描述。App 请求 {baseUrl}/manifest.json 与各 resource 端点，逻辑在服务端执行。",
+      "additionalProperties": false,
+      "required": ["baseUrl"],
+      "properties": {
+        "baseUrl": { "type": "string", "pattern": "^https://", "maxLength": 300 },
+        "resources": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["catalog", "meta", "stream", "homeStats"] },
+          "uniqueItems": true
+        }
+      }
     }
   },
   "$defs": {
+    "whenGate": {
+      "type": "object",
+      "description": "触发门槛，全部满足才生效。",
+      "additionalProperties": false,
+      "properties": {
+        "serverUrlIncludes": { "type": "string", "maxLength": 200 }
+      }
+    },
+    "dataRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url"],
+      "properties": {
+        "method": { "type": "string", "enum": ["GET", "POST"] },
+        "url": { "type": "string", "maxLength": 500, "description": "HTTPS，支持模板插值" },
+        "auth": { "type": "string", "enum": ["none", "emby"], "description": "emby=以当前登录身份注入 Emby 鉴权" },
+        "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+        "query": { "type": "object", "additionalProperties": { "type": "string" } },
+        "json": { "description": "POST 的 JSON 体(值支持模板插值)" }
+      }
+    },
+    "dataList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request", "list", "map"],
+      "properties": {
+        "request": { "$ref": "#/$defs/dataRequest" },
+        "list": { "type": "string", "maxLength": 200, "description": "响应中列表所在的点路径" },
+        "map": {
+          "type": "object",
+          "description": "列表项字段映射：目标字段 -> 源点路径",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
     "extList": {
       "type": "array",
       "maxItems": 100,

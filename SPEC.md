@@ -187,6 +187,59 @@ descriptor 里的 `handler` 是一个函数（运行时注册）或全局函数�
 
 ---
 
+## 5.5 iOS 插件（runtime: data / addon）
+
+iOS App Store 政策(指南 2.5.2)**禁止下载并执行会改变功能的代码**，所以上面的
+`runtime: js`(main.js 跑在 QuickJS)在 iOS 商店版**不能用**。iOS 专用插件必须是
+下面两种"不在设备上执行下载代码"的形态。仓库校验强制：**`targets` 含 `ios` 时
+`runtime` 必须为 `data` 或 `addon`**。这类插件**没有 main.js**。
+
+### A. `runtime: data` —— 声明式数据驱动（无服务器）
+
+插件 = 一份 `data` 声明，由 App 内置的、已过审的固定解释器执行；下载的是**数据不是代码**。
+模板插值：`{serverUrl}`、`{cfg.KEY}`(用户在 `settings` 填的值)、`{media.FIELD}`(当前媒体)。
+响应取值用点路径 `path`（如 `data.limit_bytes`）。
+
+支持的块：
+| 块 | 作用 |
+|----|------|
+| `settings[]` | 用户可填配置，值以 `{cfg.KEY}` 引用 |
+| `homeStats` | `when` 门槛 + `request` + `metrics[]`(label/path/suffix)，首页显示指标 |
+| `onEvent[]` | 播放事件(`onPlay/onPause/onPlayEnd`)触发一个 `request`（如播完发通知）|
+| `mediaSource` | `catalog`/`search`：`request` + `list`(列表点路径) + `map`(字段映射) |
+
+`request`：`{ method, url(HTTPS,可模板), auth: none|emby, headers, query, json }`。
+示例见 `plugins/com.linplayer.telegram-notify-ios/`（onPlayEnd → 发 Telegram）。
+
+**能力边界（重要）**：data 只能表达"取数据→映射/展示"。**做不了多步/有状态流程、
+计算、条件分支**——例如 `uhdnow-traffic`(先登录换 token、再带 token 请求、算剩余流量)
+就超出了 data，应改用下面的 addon。
+
+### B. `runtime: addon` —— 远程 addon 服务（Stremio/Forward 模型）
+
+插件逻辑跑在**远程 HTTP 服务**上（服务端可复用你现有的 JS），App 只按固定协议收发 JSON。
+设备上没有下载/执行任何代码，App Store 合规。manifest 只声明：
+
+```json
+"runtime": "addon",
+"addon": { "baseUrl": "https://your-addon.example.com", "resources": ["homeStats","catalog","meta","stream"] }
+```
+
+App 调用协议（v1）：
+```
+GET  {baseUrl}/manifest.json          -> { id, name, resources: [...] }
+GET  {baseUrl}/homeStats?serverUrl=.. -> { metrics: [ { label, value } ] }
+GET  {baseUrl}/catalog?query=..       -> { items:   [ { id, title, poster? } ] }
+GET  {baseUrl}/meta?id=..             -> { item:    { id, title, overview?, ... } }
+GET  {baseUrl}/stream?id=..           -> { streams: [ { url, title?, headers? } ] }
+```
+逻辑（登录、算值、分支）全在服务端；你负责托管。示例见
+`plugins/com.linplayer.uhdnow-traffic-addon/`。
+
+> 选型：能用 A 就用 A（零服务器、离线可用）；A 表达不了的有状态/计算逻辑走 B。
+
+---
+
 ## 6. 生命周期
 
 `main.js` 顶层代码在加载时执行（可在此 `ctx.player.on`、`ctx.extensions.register`）。

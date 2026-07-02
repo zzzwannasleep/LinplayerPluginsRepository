@@ -82,10 +82,26 @@ def validate_manifest(manifest_path):
                 if k not in KNOWN_EXT_POINTS:
                     err(f"{manifest_path}: 未知扩展点 {k!r}")
 
-    # 入口文件存在
-    main = m.get("main") or "main.js"
-    if not (plugin_dir / main).is_file():
-        err(f"{manifest_path}: 入口文件不存在: {main}")
+    # runtime 形态与 iOS 合规约束
+    runtime = m.get("runtime", "js")
+    if runtime not in ("js", "data", "addon"):
+        err(f"{manifest_path}: 未知 runtime {runtime!r}")
+    targets = m.get("targets") or []
+    if "ios" in targets and runtime not in ("data", "addon"):
+        err(f"{manifest_path}: targets 含 ios 时 runtime 必须为 data 或 addon(iOS 不能执行下载的 JS)")
+    if runtime == "js":
+        # 入口文件存在
+        main = m.get("main") or "main.js"
+        if not (plugin_dir / main).is_file():
+            err(f"{manifest_path}: 入口文件不存在: {main}")
+    elif runtime == "data":
+        if not isinstance(m.get("data"), dict) or not m["data"]:
+            err(f"{manifest_path}: runtime=data 需提供非空 data 声明对象")
+    elif runtime == "addon":
+        addon = m.get("addon")
+        base = addon.get("baseUrl") if isinstance(addon, dict) else None
+        if not isinstance(base, str) or not base.startswith("https://"):
+            err(f"{manifest_path}: runtime=addon 需提供 addon.baseUrl(https)")
 
     # 图标存在（若声明）
     icon = m.get("icon")

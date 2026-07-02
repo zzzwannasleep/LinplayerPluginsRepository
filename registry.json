@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-06-26T08:57:25Z",
+  "updatedAt": "2026-07-02T12:19:38Z",
   "plugins": [
     {
       "id": "com.linplayer.cf-proxy",
@@ -21,6 +21,7 @@
         "mobile",
         "tv"
       ],
+      "runtime": "js",
       "versions": [
         {
           "version": "1.0.0",
@@ -47,6 +48,7 @@
         "pc",
         "mobile"
       ],
+      "runtime": "js",
       "versions": [
         {
           "version": "1.0.0",
@@ -75,6 +77,7 @@
         "pc",
         "tv"
       ],
+      "runtime": "js",
       "versions": [
         {
           "version": "1.0.0",
@@ -83,6 +86,34 @@
           "minHostVersion": "1.0.0",
           "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.telegram-notify/1.0.0/manifest.json",
           "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.telegram-notify-1.0.0.ipk"
+        }
+      ]
+    },
+    {
+      "id": "com.linplayer.telegram-notify-ios",
+      "name": "Telegram 播放通知 (iOS)",
+      "description": "iOS 数据驱动示例：每播完一集，通过 Telegram Bot 发送通知。纯声明式、无可执行代码，App Store 合规。",
+      "author": {
+        "name": "LinPlayer"
+      },
+      "tags": [
+        "notify",
+        "telegram",
+        "player",
+        "ios"
+      ],
+      "targets": [
+        "ios"
+      ],
+      "runtime": "data",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "channel": "stable",
+          "apiVersion": 1,
+          "minHostVersion": "1.1.0",
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.telegram-notify-ios/1.0.0/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.telegram-notify-ios-1.0.0.ipk"
         }
       ]
     },
@@ -102,6 +133,7 @@
         "pc",
         "mobile"
       ],
+      "runtime": "js",
       "versions": [
         {
           "version": "1.0.0",
@@ -112,6 +144,36 @@
           "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-traffic-1.0.0.ipk"
         }
       ]
+    },
+    {
+      "id": "com.linplayer.uhdnow-traffic-addon",
+      "name": "UHDNow 流量统计 (iOS · Addon)",
+      "description": "iOS 远程 addon 示例：登录换 token、算剩余流量等有状态/需计算的逻辑在远程服务执行，App 只按协议收 homeStats JSON。服务端实现见 oauth-proxy/functions/api/addon/uhdnow/（凭据存 KV 命名空间 ADDON_KV，按 serverUrl 存，可多账号/热更新；单账号可用环境变量 UHDNOW_USERNAME/PASSWORD 回退）。把 baseUrl 与 httpAllowedHosts 换成你部署的 oauth-proxy 域名。",
+      "author": {
+        "name": "LinPlayer"
+      },
+      "tags": [
+        "uhdnow",
+        "traffic",
+        "homeStats",
+        "addon",
+        "ios"
+      ],
+      "targets": [
+        "ios"
+      ],
+      "runtime": "addon",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "channel": "stable",
+          "apiVersion": 1,
+          "minHostVersion": "1.1.0",
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-traffic-addon/1.0.0/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-traffic-addon-1.0.0.ipk"
+        }
+      ],
+      "addonBaseUrl": "https://linplayer-oauth.pages.dev/api/addon/uhdnow"
     }
   ]
 }

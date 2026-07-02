@@ -63,9 +63,10 @@ def main():
             errors.append(f"{mp}: id '{pid}' 与目录 '{id_dir}' 不一致")
         if ver != ver_dir:
             errors.append(f"{mp}: version '{ver}' 与目录 '{ver_dir}' 不一致")
-        entry_js = m.get("main", "main.js")
-        if not (mp.parent / entry_js).is_file():
-            errors.append(f"{mp}: 入口文件不存在: {entry_js}")
+        if m.get("runtime", "js") == "js":
+            entry_js = m.get("main", "main.js")
+            if not (mp.parent / entry_js).is_file():
+                errors.append(f"{mp}: 入口文件不存在: {entry_js}")
         e = by_id.setdefault(pid, {"meta": m, "versions": []})
         e["meta"] = m  # 用最后(最新版本目录)的展示元数据
         e["versions"].append((ver, m, mp.parent))
@@ -92,15 +93,20 @@ def main():
                 "manifestUrl": f"{RAW_BASE}/plugins/{pid}/{ver}/manifest.json",
                 "packageUrl": f"{RAW_BASE}/packages/{pid}-{ver}.ipk",
             })
-        reg_plugins.append({
+        entry = {
             "id": pid,
             "name": meta.get("name", pid),
             "description": meta.get("description", ""),
             "author": _author(meta),
             "tags": meta.get("tags", _DEFAULTS["tags"]),
             "targets": meta.get("targets", _DEFAULTS["targets"]),
+            "runtime": meta.get("runtime", "js"),
             "versions": versions,
-        })
+        }
+        # addon 插件把 baseUrl 抬到索引，市场/App 无需下包即可知道服务地址。
+        if meta.get("runtime") == "addon" and isinstance(meta.get("addon"), dict):
+            entry["addonBaseUrl"] = meta["addon"].get("baseUrl")
+        reg_plugins.append(entry)
 
     registry = {
         "schemaVersion": 1,
