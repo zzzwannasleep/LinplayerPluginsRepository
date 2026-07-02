@@ -197,23 +197,27 @@ iOS App Store 政策(指南 2.5.2)**禁止下载并执行会改变功能的代�
 ### A. `runtime: data` —— 声明式数据驱动（无服务器）
 
 插件 = 一份 `data` 声明，由 App 内置的、已过审的固定解释器执行；下载的是**数据不是代码**。
-模板插值：`{serverUrl}`、`{cfg.KEY}`(用户在 `settings` 填的值)、`{media.FIELD}`(当前媒体)。
-响应取值用点路径 `path`（如 `data.limit_bytes`）。
+模板插值：`{serverUrl}`、`{cfg.KEY}`(用户在 `settings` 填的值)、`{media.FIELD}`(当前媒体)、
+以及多步里 `capture` 的变量。响应取值用点路径 `path`（如 `data.limit_bytes`）。
 
 支持的块：
 | 块 | 作用 |
 |----|------|
 | `settings[]` | 用户可填配置，值以 `{cfg.KEY}` 引用 |
-| `homeStats` | `when` 门槛 + `request` + `metrics[]`(label/path/suffix)，首页显示指标 |
+| `homeStats` | `when` 门槛 + `request` **或** `steps[]`(多步,`capture` 捕获响应字段) + `metrics[]`，首页显示指标 |
 | `onEvent[]` | 播放事件(`onPlay/onPause/onPlayEnd`)触发一个 `request`（如播完发通知）|
 | `mediaSource` | `catalog`/`search`：`request` + `list`(列表点路径) + `map`(字段映射) |
 
 `request`：`{ method, url(HTTPS,可模板), auth: none|emby, headers, query, json }`。
-示例见 `plugins/com.linplayer.telegram-notify-ios/`（onPlayEnd → 发 Telegram）。
+`steps[]`：`[{ request, capture:{变量名: 响应点路径} }, ...]` 按序执行，后一步可用前一步捕获的 `{变量}`。
+`metrics[].value`：声明式变换 `{ var|subtract|add|path, divide, multiply, round, suffix }`（非公式解析器，仍是配置）。
 
-**能力边界（重要）**：data 只能表达"取数据→映射/展示"。**做不了多步/有状态流程、
-计算、条件分支**——例如 `uhdnow-traffic`(先登录换 token、再带 token 请求、算剩余流量)
-就超出了 data，应改用下面的 addon。
+示例：
+- `plugins/com.linplayer.telegram-notify-ios/`（onPlayEnd → 发 Telegram）
+- `plugins/com.linplayer.uhdnow-traffic-ios/`（**多步**：登录换 token → 拉流量 → 算剩余，纯 data，无服务器）
+
+**能力边界**：data 已能表达"多步请求 + 捕获 + 简单计算"，绝大多数"取数/展示/通知/源解析"够用。
+真正需要 addon 的只剩**只能在服务端做**的：藏一个不能进客户端的秘密 API key、服务端聚合/抓取多源、重计算。**普通的"用用户账密登录后取数"应留在 data（如 uhdnow-traffic-ios），不必上服务器。**
 
 ### B. `runtime: addon` —— 远程 addon 服务（Stremio/Forward 模型）
 
@@ -233,10 +237,11 @@ GET  {baseUrl}/catalog?query=..       -> { items:   [ { id, title, poster? } ] }
 GET  {baseUrl}/meta?id=..             -> { item:    { id, title, overview?, ... } }
 GET  {baseUrl}/stream?id=..           -> { streams: [ { url, title?, headers? } ] }
 ```
-逻辑（登录、算值、分支）全在服务端；你负责托管。示例见
-`plugins/com.linplayer.uhdnow-traffic-addon/`。
+逻辑全在服务端；你负责托管。当前仓库无内置 addon 示例（uhdnow 流量这类"账密登录取数"
+已用 data 在设备上完成，见上）。addon 机制保留，供真正只能服务端做的插件使用。
 
-> 选型：能用 A 就用 A（零服务器、离线可用）；A 表达不了的有状态/计算逻辑走 B。
+> 选型：**默认用 A（data）**——零服务器、离线可用、够表达多步+计算。仅当逻辑必须藏在服务端
+> （秘密 key / 服务端聚合抓取 / 重计算）才用 B（addon）。
 
 ---
 
