@@ -1,0 +1,21 @@
+{
+  "id": "com.linplayer.uhdnow-speed",
+  "version": "1.0.0",
+  "name": "UHDNow 线路测速",
+  "author": "LinPlayer",
+  "description": "一站式测试 UHDNow 各条线路的下载速度：登录网站账号后逐条线路建立会话、下载测试文件并测速，结果按速度排序展示。对应官网 /speed 的测速功能。会消耗少量账户流量。",
+  "main": "main.js",
+  "homepage": "https://www.uhdnow.com/speed",
+  "tags": ["uhdnow", "speed", "测速", "network"],
+  "targets": ["pc", "mobile", "tv"],
+  "channel": "stable",
+  "apiVersion": 1,
+  "minHostVersion": "1.0.0",
+  "permissions": ["emby.read", "emby.credentials", "http", "storage", "ui", "extensions"],
+  "extends": {
+    "settingsPages": [
+      { "id": "speedtest", "title": "开始测速", "handler": "openSpeedTest" },
+      { "id": "account", "title": "账号设置", "handler": "openAccount" }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-02T12:47:57Z",
+  "updatedAt": "2026-07-11T16:58:00Z",
   "plugins": [
     {
       "id": "com.linplayer.cf-proxy",
@@ -114,6 +114,66 @@
           "minHostVersion": "1.1.0",
           "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.telegram-notify-ios/1.0.0/manifest.json",
           "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.telegram-notify-ios-1.0.0.ipk"
+        }
+      ]
+    },
+    {
+      "id": "com.linplayer.uhdnow-request",
+      "name": "UHDNow 求片",
+      "description": "一站式在 App 内提交 UHDNow 求片 / 追新：搜索影视条目、选中后填说明提交，并查看自己已提交的求片及处理状态。对应官网 /user/help/media-requests 的求片功能。",
+      "author": {
+        "name": "LinPlayer"
+      },
+      "tags": [
+        "uhdnow",
+        "求片",
+        "media-request",
+        "追新"
+      ],
+      "targets": [
+        "pc",
+        "mobile",
+        "tv"
+      ],
+      "runtime": "js",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "channel": "stable",
+          "apiVersion": 1,
+          "minHostVersion": "1.0.0",
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-request/1.0.0/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-request-1.0.0.ipk"
+        }
+      ]
+    },
+    {
+      "id": "com.linplayer.uhdnow-speed",
+      "name": "UHDNow 线路测速",
+      "description": "一站式测试 UHDNow 各条线路的下载速度：登录网站账号后逐条线路建立会话、下载测试文件并测速，结果按速度排序展示。对应官网 /speed 的测速功能。会消耗少量账户流量。",
+      "author": {
+        "name": "LinPlayer"
+      },
+      "tags": [
+        "uhdnow",
+        "speed",
+        "测速",
+        "network"
+      ],
+      "targets": [
+        "pc",
+        "mobile",
+        "tv"
+      ],
+      "runtime": "js",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "channel": "stable",
+          "apiVersion": 1,
+          "minHostVersion": "1.0.0",
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-speed/1.0.0/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-speed-1.0.0.ipk"
         }
       ]
     },

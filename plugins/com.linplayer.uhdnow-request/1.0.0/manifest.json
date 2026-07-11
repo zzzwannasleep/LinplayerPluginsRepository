@@ -1,0 +1,22 @@
+{
+  "id": "com.linplayer.uhdnow-request",
+  "version": "1.0.0",
+  "name": "UHDNow 求片",
+  "author": "LinPlayer",
+  "description": "一站式在 App 内提交 UHDNow 求片 / 追新：搜索影视条目、选中后填说明提交，并查看自己已提交的求片及处理状态。对应官网 /user/help/media-requests 的求片功能。",
+  "main": "main.js",
+  "homepage": "https://www.uhdnow.com/user/help/media-requests",
+  "tags": ["uhdnow", "求片", "media-request", "追新"],
+  "targets": ["pc", "mobile", "tv"],
+  "channel": "stable",
+  "apiVersion": 1,
+  "minHostVersion": "1.0.0",
+  "permissions": ["emby.read", "emby.credentials", "http", "storage", "ui", "extensions"],
+  "httpAllowedHosts": ["www.uhdnow.com", "uhdnow.com"],
+  "extends": {
+    "settingsPages": [
+      { "id": "request", "title": "求片 / 我的求片", "handler": "openRequests" },
+      { "id": "account", "title": "账号设置", "handler": "openAccount" }
+    ]
+  }
+}
