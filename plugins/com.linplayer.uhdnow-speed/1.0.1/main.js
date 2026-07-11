@@ -1,15 +1,17 @@
 // UHDNow 线路测速插件
 //
 // 一站式测试 UHDNow 各条线路的下载速度。对应官网 https://www.uhdnow.com/speed。
-// 在插件「开始测速」里：逐条线路 -> 解析真实域名 -> 建测速会话 -> 下载测试文件测速 ->
-// 上报结果，最后按速度排序展示。会消耗少量账户流量（每条线路约「测试大小」MiB）。
+// 逐条线路 -> 解析真实域名 -> 建测速会话 -> 下载测试文件测速 -> 上报，按速度排序展示。
 //
-// 登录：在「账号设置」里填 uhdnow 网站账号密码；也会回退到添加服务器时填的 Emby 账密。
+// 测试文件大小对标官网：32 / 64 / 100 MiB（在「账号设置」里选，默认 32）。
+// 下载走 ctx.http 的 discardBody（按流丢弃、只计字节数），因此大文件也不会撑爆插件内存。
 //
-// 接口（逆向自 www.uhdnow.com 前端，与官网 /speed 一致）：
-//   POST /api/v1/auth/login {username,password} -> {ok, data:{token}}
-//   GET  /api/v1/subscriptions/domains          -> {ok, data:[{id,name,domain}]}
-//   GET  /api/v1/subscriptions/domains/{id}/resolve -> {ok, data:{domain: <线路基址>}}
+// 登录：在「账号设置」填 uhdnow 网站账号密码；也会回退到添加服务器时的 Emby 账密。
+//
+// 接口（逆向自 www.uhdnow.com 前端 /speed，已实测端点存在）：
+//   POST /api/v1/auth/login {username,password}          -> {ok, data:{token}}
+//   GET  /api/v1/subscriptions/domains                   -> {ok, data:[{id,name,domain}]}
+//   GET  /api/v1/subscriptions/domains/{id}/resolve      -> {ok, data:{domain: <线路基址>}}
 //   POST {线路基址}/api/v1/speed-test/session {parent_domain_id,size_mib}
 //        -> {ok, data:{session_id, report_token}}
 //   GET  {线路基址}/api/v1/speed-test/download?size_mb=&session_id=  -> 测试字节流
@@ -21,8 +23,8 @@
 
 var API_BASE = 'https://www.uhdnow.com';
 var UA = 'Mozilla/5.0';
-var DEFAULT_SIZE_MIB = 10; // 每条线路的测试文件大小；越大越准但越费流量
-var MAX_SIZE_MIB = 20;     // 上限：下载体会落进 isolate（64MB 上限），留足余量
+var SIZE_OPTIONS = [32, 64, 100]; // MiB，对标官网 /speed
+var DEFAULT_SIZE_MIB = 32;
 
 // ---------- 登录 ----------
 async function getCreds() {
@@ -36,7 +38,6 @@ async function getCreds() {
   return null;
 }
 
-// 返回 { token } 或 { error: 'NO_CREDS'|'AUTH'|'NETWORK', msg }
 async function login() {
   var creds = await getCreds();
   if (!creds) return { error: 'NO_CREDS' };
@@ -63,7 +64,6 @@ async function login() {
   return { error: 'NETWORK' };
 }
 
-// 拿有效 token（必要时登录）。返回 { token } 或 { error }。
 async function ensureToken() {
   var token = await ctx.storage.get('token');
   if (token) return { token: token };
@@ -71,22 +71,20 @@ async function ensureToken() {
 }
 
 // ---------- HTTP 小工具 ----------
-function joinUrl(base, path) {
-  return String(base).replace(/\/+$/, '') + path;
-}
+function joinUrl(base, path) { return String(base).replace(/\/+$/, '') + path; }
 
 function getHeader(res, name) {
   var h = res && res.headers;
   if (!h) return null;
   var lower = name.toLowerCase();
-  for (var k in h) {
-    if (k.toLowerCase() === lower) return h[k];
-  }
+  for (var k in h) { if (k.toLowerCase() === lower) return h[k]; }
   return null;
 }
 
-function authGet(url, token) {
-  return ctx.http.get(url, { headers: { 'Authorization': token, 'User-Agent': UA } });
+function authGet(url, token, opts) {
+  var o = { headers: { 'Authorization': token, 'User-Agent': UA } };
+  if (opts && opts.discardBody) o.discardBody = true;
+  return ctx.http.get(url, o);
 }
 
 function authPost(url, body, token) {
@@ -95,12 +93,18 @@ function authPost(url, body, token) {
   });
 }
 
+function normSize(v) {
+  var n = Math.round(Number(v) || 0);
+  return SIZE_OPTIONS.indexOf(n) >= 0 ? n : DEFAULT_SIZE_MIB;
+}
+
 // ---------- 测速核心 ----------
 async function fetchLines(token) {
   var res = await authGet(API_BASE + '/api/v1/subscriptions/domains', token);
   var b = res.body;
   if (res.status === 200 && b && b.ok && Array.isArray(b.data)) return b.data;
-  return null;
+  if (res.status === 401) return null; // 触发上层重登
+  return [];
 }
 
 // 测一条线路。返回 { name, mbps, mbytesPerSec } 或 { name, error }。
@@ -124,7 +128,10 @@ async function testLine(line, token, sizeMib) {
   try {
     sr = await authPost(joinUrl(base, '/api/v1/speed-test/session'),
       { parent_domain_id: line.id, size_mib: sizeMib }, token);
-  } catch (e) { return { name: name, error: '不可用' }; }
+  } catch (e) {
+    // 线路域名不在白名单时会抛异常 —— 明确提示，便于反馈补白名单
+    return { name: name, error: /白名单/.test(String(e)) ? '域名未授权' : '不可用' };
+  }
   var sb = sr.body;
   if (sr.status === 403) return { name: name, error: '不可用' };
   if (!(sr.status === 200 && sb && sb.ok && sb.data && sb.data.session_id && sb.data.report_token)) {
@@ -132,25 +139,28 @@ async function testLine(line, token, sizeMib) {
   }
   var sess = sb.data;
 
-  // ③ 下载测试文件并计时
+  // ③ 下载测试文件并计时（discardBody：只计字节数，不占插件内存）
   var dlUrl = joinUrl(base, '/api/v1/speed-test/download') +
     '?size_mb=' + sizeMib + '&session_id=' + encodeURIComponent(sess.session_id);
   var t0 = Date.now();
   var dr;
   try {
-    dr = await authGet(dlUrl, token);
+    dr = await authGet(dlUrl, token, { discardBody: true });
   } catch (e) { return { name: name, error: '下载失败' }; }
   var elapsedMs = Date.now() - t0;
   if (dr.status === 403) return { name: name, error: '流量不足' };
   if (dr.status !== 200) return { name: name, error: '下载失败' };
   if (elapsedMs <= 0) elapsedMs = 1;
 
-  var bytes = Number(getHeader(dr, 'content-length')) || (sizeMib * 1024 * 1024);
+  // 新宿主返回 bytes（真实下载字节数）；旧宿主没有则退回 Content-Length / 预期大小
+  var bytes = (typeof dr.bytes === 'number' && dr.bytes > 0)
+    ? dr.bytes
+    : (Number(getHeader(dr, 'content-length')) || (sizeMib * 1024 * 1024));
   var secs = elapsedMs / 1000;
   var mbytesPerSec = bytes / secs / (1024 * 1024);   // MB/s（1024 进制）
-  var mbps = (bytes * 8) / secs / 1e6;               // Mbps（十进制兆比特，与官网口径一致）
+  var mbps = (bytes * 8) / secs / 1e6;               // Mbps（十进制，与官网口径一致）
 
-  // ④ 上报（尽力而为，失败不影响结果）
+  // ④ 上报（尽力而为）
   try {
     await authPost(API_BASE + '/api/v1/speed-test/report', {
       session_id: sess.session_id,
@@ -181,63 +191,59 @@ async function openSpeedTest() {
     }
   }
   var token = t.token;
-
-  var sizeMib = Number(await ctx.storage.get('size_mib')) || DEFAULT_SIZE_MIB;
+  var sizeMib = normSize(await ctx.storage.get('size_mib'));
 
   var lines = await fetchLines(token);
-  if (lines === null) {
-    // token 可能过期，重登一次
+  if (lines === null) { // token 过期，重登一次
     await ctx.storage.delete('token');
     var r = await login();
     if (!r.token) { ctx.ui.showToast('获取线路失败，请稍后再试'); return; }
     token = r.token;
-    lines = await fetchLines(token);
+    lines = await fetchLines(token) || [];
   }
-  if (!lines || !lines.length) { ctx.ui.showToast('没有可用线路'); return; }
+  if (!lines.length) { ctx.ui.showToast('没有可用线路'); return; }
 
   var confirm = await ctx.ui.showDialog({
     title: 'UHDNow 线路测速',
-    message: '将逐条测试 ' + lines.length + ' 条线路，每条约下载 ' + sizeMib +
+    message: '将逐条测试 ' + lines.length + ' 条线路，每条下载 ' + sizeMib +
       ' MiB 测试文件（共约 ' + (lines.length * sizeMib) + ' MiB），会消耗账户流量。是否继续？',
     buttons: [{ id: 'go', label: '开始' }, { id: 'cancel', label: '取消' }]
   });
   if (confirm !== 'go') return;
 
-  ctx.ui.showToast('测速中，请稍候…');
+  ctx.ui.showToast('测速中，请稍候…（' + lines.length + ' 条线路）');
   var results = [];
   for (var i = 0; i < lines.length; i++) {
     results.push(await testLine(lines[i], token, sizeMib));
   }
 
-  // 有速度的排前面（降序），失败的排后面
-  var ok = results.filter(function (r) { return typeof r.mbps === 'number'; })
+  var ok2 = results.filter(function (r) { return typeof r.mbps === 'number'; })
     .sort(function (a, b) { return b.mbps - a.mbps; });
   var bad = results.filter(function (r) { return typeof r.mbps !== 'number'; });
 
-  var lines2 = [];
-  for (var j = 0; j < ok.length; j++) {
-    var r = ok[j];
-    lines2.push((j + 1) + '. ' + r.name + '  ' +
-      r.mbps.toFixed(1) + ' Mbps (' + r.mbytesPerSec.toFixed(1) + ' MB/s)');
+  var out = [];
+  for (var j = 0; j < ok2.length; j++) {
+    var r2 = ok2[j];
+    out.push((j + 1) + '. ' + r2.name + '  ' +
+      r2.mbps.toFixed(1) + ' Mbps (' + r2.mbytesPerSec.toFixed(1) + ' MB/s)');
   }
   for (var k = 0; k < bad.length; k++) {
-    lines2.push('— ' + bad[k].name + '  ' + bad[k].error);
+    out.push('— ' + bad[k].name + '  ' + bad[k].error);
   }
 
   await ctx.ui.showDialog({
-    title: '测速结果（越靠前越快）',
-    message: lines2.join('\n') + '\n\n注：结果为客户端粗测，仅供参考。',
+    title: '测速结果 · ' + sizeMib + ' MiB（越靠前越快）',
+    message: out.join('\n') + '\n\n注：结果为客户端粗测，仅供参考。',
     buttons: [{ id: 'ok', label: '完成' }]
   });
 }
 
 // ---------- 账号设置 ----------
-// 返回 true 表示保存了账密（可继续测速），false 表示取消。
 async function openAccount() {
   var info = {};
   try { info = (await ctx.emby.getServerInfo()) || {}; } catch (e) { /* 可无 */ }
   var u = (await ctx.storage.get('site_username')) || (info.username || '');
-  var size = Number(await ctx.storage.get('size_mib')) || DEFAULT_SIZE_MIB;
+  var size = normSize(await ctx.storage.get('size_mib'));
 
   var values = await ctx.ui.showForm({
     title: 'UHDNow 测速 · 账号',
@@ -245,8 +251,8 @@ async function openAccount() {
       { key: 'username', label: '网站用户名', type: 'text', default: u,
         hint: 'uhdnow 网站登录账号（可能与 Emby 不同）' },
       { key: 'password', label: '网站密码', type: 'password', default: '' },
-      { key: 'size', label: '每条线路测试大小(MiB)', type: 'number', default: size,
-        hint: '默认 ' + DEFAULT_SIZE_MIB + '，越大越准但越费流量（上限 ' + MAX_SIZE_MIB + '）' }
+      { key: 'size', label: '测试文件大小(MiB)', type: 'number', default: size,
+        hint: '对标官网，可填 32 / 64 / 100（默认 32）；越大越准但越费流量' }
     ],
     submitLabel: '保存',
     cancelLabel: '取消'
@@ -257,9 +263,8 @@ async function openAccount() {
   var pw = (values.password || '').trim();
   if (un) await ctx.storage.set('site_username', un);
   if (pw) await ctx.storage.set('site_password', pw);
-  var sz = Math.max(1, Math.min(MAX_SIZE_MIB, Math.round(Number(values.size) || DEFAULT_SIZE_MIB)));
-  await ctx.storage.set('size_mib', sz);
-  await ctx.storage.delete('token'); // 换账密强制重登
+  await ctx.storage.set('size_mib', normSize(values.size));
+  await ctx.storage.delete('token');
 
   var r = await login();
   if (r.token) { ctx.ui.showToast('登录成功，可到「开始测速」运行'); return true; }

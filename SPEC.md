@@ -86,7 +86,16 @@ const res = await ctx.http.get(url, { headers, query });
 const res = await ctx.http.post(url, body, { headers, query });
 // res = { status, headers, body }
 // body：响应是 JSON 时为对象/数组，否则为字符串
+
+// discardBody：按流丢弃响应体、只统计字节数，不读进 isolate（避免大文件撑爆 64MB）。
+// 用于测速这类只关心“传了多少、多快”的下载。返回 { status, headers, bytes }。
+const res = await ctx.http.get(url, { headers, discardBody: true });
+// res = { status, headers, bytes }
 ```
+
+> **白名单是 fail-closed 的**：`httpAllowedHosts` 为空/缺省 = **拒绝所有主机**（不是放行）。
+> 任何要联网的插件都必须显式列出会访问的 host（精确匹配，无通配符），否则每次请求都抛
+> `域名不在白名单内`。重定向后的最终 host 也必须在白名单内。
 
 ### ctx.storage（需 `storage`，<=5MB）
 ```js

@@ -1,9 +1,9 @@
 {
   "id": "com.linplayer.uhdnow-request",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "UHDNow 求片",
   "author": "LinPlayer",
-  "description": "一站式在 App 内提交 UHDNow 求片 / 追新：搜索影视条目、选中后填说明提交，并查看自己已提交的求片及处理状态。对应官网 /user/help/media-requests 的求片功能。",
+  "description": "一站式在 App 内提交 UHDNow 求片 / 追新：搜索影视条目、选中后填说明提交；查看自己的求片及处理状态；浏览热门求片并投票支持。对应官网 /user/help/media-requests。",
   "main": "main.js",
   "homepage": "https://www.uhdnow.com/user/help/media-requests",
   "tags": ["uhdnow", "求片", "media-request", "追新"],
