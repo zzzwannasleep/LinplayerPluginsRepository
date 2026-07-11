@@ -124,10 +124,19 @@ ctx.ui.showToast(message);
 const buttonId = await ctx.ui.showDialog({ title, message, buttons: [{ id, label }] });
 const values = await ctx.ui.showForm({
   title,
-  fields: [{ key, label, type: 'text'|'password'|'number'|'switch', default, hint }],
+  fields: [
+    { key, label, type: 'text'|'password'|'number'|'switch', default, hint },
+    // select：下拉选择，options 每项 { value, label }，返回选中项的 value
+    { key, label, type: 'select', options: [{ value, label }], default, hint }
+  ],
   submitLabel, cancelLabel
 }); // 返回 { key: value } 或 null（取消）
 await ctx.ui.openPage(pageId, params);
+
+// 进度面板：可实时更新的模态框，用于测速/下载这类过程可视化。
+const id = await ctx.ui.showProgress({ title, message, percent }); // percent 0-100，缺省=不定态
+await ctx.ui.updateProgress(id, { message, percent });
+await ctx.ui.closeProgress(id);
 ```
 
 ### ctx.emby

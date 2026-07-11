@@ -1,9 +1,9 @@
 {
   "id": "com.linplayer.uhdnow-speed",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "name": "UHDNow 线路测速",
   "author": "LinPlayer",
-  "description": "一站式测试 UHDNow 各条线路的下载速度：登录网站账号后逐条线路建立会话、下载测试文件并测速，结果按速度排序展示。测试大小对标官网（32/64/100 MiB）。会消耗账户流量。",
+  "description": "选择一条 UHDNow 线路测下载速度，全程进度可视化（实时速度 + 进度条）。测试大小对标官网 32/64/100 MiB。需登录网站账号，会消耗账户流量。",
   "main": "main.js",
   "homepage": "https://www.uhdnow.com/speed",
   "tags": ["uhdnow", "speed", "测速", "network"],
