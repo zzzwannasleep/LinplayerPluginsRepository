@@ -1,11 +1,7 @@
 // UHDNow 线路测速插件
 //
-// 选择一条线路测下载速度，全程进度可视化。对应官网 https://www.uhdnow.com/speed，
-// 但不批量测——由用户自己选线路（和官网一样一次测一条）。
-//
-// 流程：登录 -> 选线路 + 选大小(32/64/100 MiB) -> 解析线路 -> 分段下载并实时刷新
-// 进度条与速度 -> 上报 -> 展示结果。下载用 ctx.http 的 discardBody（按流丢弃只计字节），
-// 分段是为了驱动进度条，不占插件内存。
+// 从线路列表里选一条线路测下载速度，全程进度可视化。对应官网 https://www.uhdnow.com/speed。
+// 一次测一条（和官网一样），用列表选择器点选线路，进度面板实时显示速度。
 //
 // 接口（逆向自 www.uhdnow.com 前端 /speed，已实测端点存在）：
 //   POST /api/v1/auth/login {username,password}          -> {ok, data:{token}}
@@ -16,6 +12,7 @@
 //   GET  {线路基址}/api/v1/speed-test/download?size_mb=&session_id=  -> 测试字节流
 //   POST /api/v1/speed-test/report {session_id,report_token,average_mbps,...}
 //
+// 依赖较新宿主：ctx.ui.showList / showProgress、ctx.http discardBody、空转看门狗（不再 30s 误杀）。
 // Authorization 头用原始 token（非 Bearer）。
 
 'use strict';
@@ -83,7 +80,6 @@ function authPost(url, body, token) {
     headers: { 'Content-Type': 'application/json', 'Authorization': token, 'User-Agent': UA }
   });
 }
-
 async function fetchLines(token) {
   var res = await authGet(API_BASE + '/api/v1/subscriptions/domains', token);
   var b = res.body;
@@ -91,7 +87,6 @@ async function fetchLines(token) {
   if (res.status === 401) return null;
   return [];
 }
-
 function fmt(n) { return (Math.round(n * 10) / 10).toFixed(1); }
 
 // ---------- 入口：开始测速 ----------
@@ -107,7 +102,7 @@ async function openSpeedTest() {
   var token = t.token;
 
   var lines = await fetchLines(token);
-  if (lines === null) { // 过期重登
+  if (lines === null) {
     await ctx.storage.delete('token');
     var r = await login();
     if (!r.token) { ctx.ui.showToast('获取线路失败，请稍后再试'); return; }
@@ -116,29 +111,28 @@ async function openSpeedTest() {
   }
   if (!lines.length) { ctx.ui.showToast('没有可用线路'); return; }
 
-  // 选线路 + 选大小（下拉）
-  var lastLine = await ctx.storage.get('last_line');
-  var lastSize = Number(await ctx.storage.get('size_mib')) || 32;
-  var form = await ctx.ui.showForm({
-    title: 'UHDNow 测速',
-    fields: [
-      { key: 'line', label: '选择线路', type: 'select',
-        options: lines.map(function (l) { return { value: l.id, label: l.name || l.domain || ('线路#' + l.id) }; }),
-        default: lastLine },
-      { key: 'size', label: '测试大小', type: 'select',
-        options: SIZE_OPTIONS.map(function (s) { return { value: s, label: s + ' MiB' }; }),
-        default: lastSize }
-    ],
-    submitLabel: '开始测速', cancelLabel: '取消'
+  // 从列表选一条线路
+  var lineId = await ctx.ui.showList({
+    title: '选择测速线路',
+    items: lines.map(function (l) {
+      return { id: String(l.id), title: l.name || l.domain || ('线路#' + l.id), subtitle: l.domain || '' };
+    }),
+    cancelLabel: '取消'
   });
-  if (!form) return;
-
+  if (!lineId) return;
   var line = null;
-  for (var i = 0; i < lines.length; i++) { if (String(lines[i].id) === String(form.line)) { line = lines[i]; break; } }
-  if (!line) line = lines[0];
-  var sizeMib = SIZE_OPTIONS.indexOf(Number(form.size)) >= 0 ? Number(form.size) : 32;
-  await ctx.storage.set('last_line', line.id);
-  await ctx.storage.set('size_mib', sizeMib);
+  for (var i = 0; i < lines.length; i++) { if (String(lines[i].id) === String(lineId)) { line = lines[i]; break; } }
+  if (!line) return;
+
+  // 选测试大小（对标官网 32/64/100）
+  var sizeChoice = await ctx.ui.showDialog({
+    title: '测试大小（对标官网）',
+    message: '选择本次下载量，越大越准但越费流量。',
+    buttons: SIZE_OPTIONS.map(function (s) { return { id: String(s), label: s + ' MiB' }; })
+      .concat([{ id: 'cancel', label: '取消' }])
+  });
+  if (!sizeChoice || sizeChoice === 'cancel') return;
+  var sizeMib = SIZE_OPTIONS.indexOf(Number(sizeChoice)) >= 0 ? Number(sizeChoice) : 32;
 
   await runTest(line, sizeMib, token);
 }
@@ -147,10 +141,8 @@ async function openSpeedTest() {
 async function runTest(line, sizeMib, token) {
   var name = line.name || line.domain || ('线路#' + line.id);
   var pid = await ctx.ui.showProgress({ title: '测速 · ' + name, message: '正在解析线路…', percent: 3 });
-
   function fail(msg) { ctx.ui.closeProgress(pid); ctx.ui.showToast(msg); }
 
-  // 解析线路真实基址
   var rr;
   try { rr = await authGet(API_BASE + '/api/v1/subscriptions/domains/' + encodeURIComponent(line.id) + '/resolve', token); }
   catch (e) { return fail('线路解析失败'); }
@@ -162,13 +154,12 @@ async function runTest(line, sizeMib, token) {
   var totalBytes = 0, totalMs = 0, peak = 0, lastSess = null;
 
   for (var i = 0; i < nChunks; i++) {
-    // 每段：本段大小 = 剩余与 CHUNK 的较小值；每段独立会话（服务端对单会话单次下载最稳）
     var chunk = Math.min(CHUNK_MIB, sizeMib - i * CHUNK_MIB);
     if (chunk <= 0) break;
 
     await ctx.ui.updateProgress(pid, {
       percent: 8 + Math.round(87 * (i / nChunks)),
-      message: '建立会话（第 ' + (i + 1) + '/' + nChunks + ' 段）…' +
+      message: '测速中（第 ' + (i + 1) + '/' + nChunks + ' 段）…' +
         (totalBytes > 0 ? ('\n平均 ' + fmt(totalBytes * 8 / (totalMs / 1000) / 1e6) + ' Mbps') : '')
     });
 
@@ -208,9 +199,8 @@ async function runTest(line, sizeMib, token) {
   }
 
   var avg = totalBytes * 8 / (totalMs / 1000) / 1e6;
-  var mbps_mBs = totalBytes / (totalMs / 1000) / 1048576;
+  var mBs = totalBytes / (totalMs / 1000) / 1048576;
 
-  // 上报（一次，尽力而为）
   if (lastSess) {
     try {
       await authPost(API_BASE + '/api/v1/speed-test/report', {
@@ -227,9 +217,8 @@ async function runTest(line, sizeMib, token) {
 
   await ctx.ui.showDialog({
     title: '测速结果 · ' + name,
-    message: '平均速度：' + fmt(avg) + ' Mbps（' + fmt(mbps_mBs) + ' MB/s）\n' +
-      '峰值速度：' + fmt(peak) + ' Mbps\n' +
-      '测试大小：' + sizeMib + ' MiB\n\n注：客户端粗测，仅供参考。',
+    message: '平均速度：' + fmt(avg) + ' Mbps（' + fmt(mBs) + ' MB/s）\n' +
+      '峰值速度：' + fmt(peak) + ' Mbps\n测试大小：' + sizeMib + ' MiB\n\n注：客户端粗测，仅供参考。',
     buttons: [{ id: 'ok', label: '完成' }]
   });
 }

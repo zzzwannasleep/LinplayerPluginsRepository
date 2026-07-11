@@ -1,33 +1,36 @@
 // UHDNow 求片插件
 //
-// 在 App 内搜索并提交 UHDNow 求片 / 追新，查看「我的求片」「全部求片」列表，为热门求片投票。
-// 对应官网 https://www.uhdnow.com/user/help/media-requests。选片/选类型全走下拉。
+// 搜索后弹出【带海报的结果列表】点选影视，填说明提交求片 / 追新；查看「我的求片」「全部求片」
+// （带海报），为热门求片投票。对应官网 https://www.uhdnow.com/user/help/media-requests。
 //
-// 重要：提交时「说明」为必填（官网同样必填），留空会被服务端拒绝“参数验证失败”。
+// 提交时「说明」为必填（官网同样必填），留空会被服务端拒“参数验证失败”。
 //
-// 接口（逆向自 www.uhdnow.com 前端，已实测端点存在）：
+// 依赖较新宿主：ctx.ui.showList（带缩略图的列表选择器）、select 表单字段、ctx.http.delete、
+// 空转看门狗（交互流程不再 30s 误杀）。海报由宿主直接加载 image.tmdb.org（不走插件白名单）。
+//
+// 接口（逆向自 www.uhdnow.com 前端）：
 //   POST /api/v1/auth/login {username,password}          -> {ok, data:{token}}
 //   POST /api/v1/media-requests/search {keyword,request_type,page,page_size}
-//        -> {ok, data:{list:[{tmdb_id,media_type,title,original_title,year,
-//                             poster_path,backdrop_path,overview,library_media_id}]}}
+//        -> {ok, data:{list:[{tmdb_id,media_type,title,original_title,year,poster_path,
+//                             backdrop_path,overview,library_media_id}]}}
 //   POST /api/v1/media-requests {request_type,media_type,tmdb_id,title,...,content(必填)}
 //   POST /api/v1/media-requests/mine/list {page,page_size}
 //   POST /api/v1/media-requests/list      {page,page_size}
-//   POST   /api/v1/media-requests/{id}/vote   加票
-//   DELETE /api/v1/media-requests/{id}/vote   取消票
+//   POST|DELETE /api/v1/media-requests/{id}/vote
 //
-// request_type：missing=求片 / refresh=追新。status：pending/processing/deferred/rejected/completed。
-// Authorization 头用原始 token（非 Bearer）。
+// request_type：missing=求片 / refresh=追新。Authorization 头用原始 token（非 Bearer）。
 
 'use strict';
 
 var API_BASE = 'https://www.uhdnow.com';
+var TMDB_IMG = 'https://image.tmdb.org/t/p/w200';
 var UA = 'Mozilla/5.0';
 var STATUS_LABEL = {
   pending: '待处理', processing: '处理中', deferred: '已暂缓', rejected: '未通过', completed: '已完成'
 };
 var TYPE_LABEL = { missing: '求片', refresh: '追新' };
 function mediaTypeLabel(t) { return t === 'movie' ? '电影' : (t === 'tv' ? '剧集' : (t || '')); }
+function posterUrl(p) { return p ? (TMDB_IMG + p) : ''; }
 
 // ---------- 登录 ----------
 async function getCreds() {
@@ -70,7 +73,7 @@ async function ensureToken() {
   return login();
 }
 
-// ---------- 统一请求（带 401 重登 + 日志 + 错误分类）----------
+// ---------- 统一请求（401 重登 + 日志 + 错误分类）----------
 async function apiReq(method, path, body) {
   var t = await ensureToken();
   if (!t.token) return t;
@@ -166,32 +169,41 @@ async function doSearch() {
   var list = pickList(r.body).slice(0, 20);
   if (!list.length) { ctx.ui.showToast('没有找到「' + keyword + '」'); return; }
 
-  // 选片 + 填说明（说明必填，留空则循环重填）
-  var selIdx = 0, content = '';
+  // 带海报的结果列表，点选一条
+  var idxStr = await ctx.ui.showList({
+    title: '选择要' + TYPE_LABEL[requestType] + '的影视',
+    items: list.map(function (it, i) {
+      var sub = [];
+      if (it.year) sub.push(String(it.year));
+      sub.push(mediaTypeLabel(it.media_type));
+      if (it.original_title && it.original_title !== it.title) sub.push(it.original_title);
+      return {
+        id: String(i),
+        title: it.title || it.original_title || ('tmdb#' + it.tmdb_id),
+        subtitle: sub.join(' · '),
+        image: posterUrl(it.poster_path)
+      };
+    }),
+    cancelLabel: '取消'
+  });
+  if (idxStr === null || idxStr === undefined || idxStr === '') return;
+  var pick = list[Number(idxStr)] || list[0];
+
+  // 说明必填，留空则循环重填
+  var content = '';
   while (true) {
     var f2 = await ctx.ui.showForm({
-      title: '提交' + TYPE_LABEL[requestType],
-      fields: [
-        { key: 'result', label: '选择条目', type: 'select', default: selIdx,
-          options: list.map(function (it, i) {
-            var meta = [];
-            if (it.year) meta.push(String(it.year));
-            meta.push(mediaTypeLabel(it.media_type));
-            return { value: i, label: (it.title || it.original_title || ('tmdb#' + it.tmdb_id)) + '（' + meta.join(' · ') + '）' };
-          }) },
-        { key: 'content', label: '说明（必填）', type: 'text', default: content,
-          hint: '本次处理说明，如版本 / 分辨率 / 集数等诉求' }
-      ],
+      title: '提交' + TYPE_LABEL[requestType] + '：' + (pick.title || ''),
+      fields: [{ key: 'content', label: '说明（必填）', type: 'text', default: content,
+        hint: '本次处理说明，如版本 / 分辨率 / 集数等诉求' }],
       submitLabel: '提交', cancelLabel: '取消'
     });
     if (!f2) return;
-    selIdx = Number(f2.result) || 0;
     content = (f2.content || '').trim();
     if (!content) { ctx.ui.showToast('「说明」为必填，请填写后再提交'); continue; }
     break;
   }
 
-  var pick = list[selIdx] || list[0];
   var bodyReq = {
     request_type: requestType,
     media_type: pick.media_type,
@@ -211,7 +223,7 @@ async function doSearch() {
   ctx.ui.showToast((pick.title || '') + ' ' + TYPE_LABEL[requestType] + '已提交');
 }
 
-// ---------- 列表（我的 / 全部）。全部支持投票。----------
+// ---------- 列表（我的 / 全部）。带海报；全部支持投票。----------
 async function doList(path, title, votable) {
   ctx.ui.showToast('加载中…');
   var r = await apiReq('post', path, { page: 1, page_size: 20 });
@@ -222,48 +234,52 @@ async function doList(path, title, votable) {
     return;
   }
 
-  var lines = [];
-  for (var i = 0; i < list.length; i++) {
-    var it = list[i];
-    var m = it.media || it;
-    var nm = m.title || m.original_title || ('tmdb#' + (m.tmdb_id || it.tmdb_id || '?'));
-    var status = STATUS_LABEL[it.status] || it.status || '';
-    var type = TYPE_LABEL[it.request_type] || '';
-    var votes = (typeof it.vote_count === 'number') ? ('  ♥' + it.vote_count) : '';
-    var mine = it.voted_by_me ? ' ✓' : '';
-    lines.push((i + 1) + '. ' + nm + '  [' + type + '·' + status + ']' + votes + mine);
-  }
+  var idxStr = await ctx.ui.showList({
+    title: title + (votable ? '（点选可投票）' : ''),
+    items: list.map(function (it, i) {
+      var m = it.media || it;
+      var nm = m.title || m.original_title || ('tmdb#' + (m.tmdb_id || it.tmdb_id || '?'));
+      var status = STATUS_LABEL[it.status] || it.status || '';
+      var type = TYPE_LABEL[it.request_type] || '';
+      var votes = (typeof it.vote_count === 'number') ? ('  ♥' + it.vote_count) : '';
+      var mine = it.voted_by_me ? ' ✓已投' : '';
+      return {
+        id: String(i),
+        title: nm + votes,
+        subtitle: type + ' · ' + status + mine,
+        image: posterUrl(m.poster_path)
+      };
+    }),
+    cancelLabel: '完成'
+  });
+  if (idxStr === null || idxStr === undefined || idxStr === '') return;
+  var it = list[Number(idxStr)];
+  if (!it) return;
 
   if (!votable) {
-    await ctx.ui.showDialog({ title: title + '（' + list.length + '）', message: lines.join('\n'),
-      buttons: [{ id: 'ok', label: '完成' }] });
+    // 我的求片：点选看详情
+    var m2 = it.media || it;
+    var nm2 = m2.title || m2.original_title || ('tmdb#' + (m2.tmdb_id || it.tmdb_id || '?'));
+    await ctx.ui.showDialog({
+      title: nm2,
+      message: '类型：' + (TYPE_LABEL[it.request_type] || '') + '\n' +
+        '状态：' + (STATUS_LABEL[it.status] || it.status || '') + '\n' +
+        (typeof it.vote_count === 'number' ? ('票数：' + it.vote_count + '\n') : '') +
+        (it.content ? ('说明：' + it.content) : ''),
+      buttons: [{ id: 'ok', label: '完成' }]
+    });
     return;
   }
 
-  // 全部求片：先展示列表，再选择投票对象
-  var act = await ctx.ui.showDialog({
-    title: title + '（' + list.length + '）',
-    message: lines.join('\n') + '\n\n✓ = 你已投过',
-    buttons: [{ id: 'vote', label: '投票 / 取消' }, { id: 'ok', label: '完成' }]
+  // 全部求片：点选后投票 / 取消
+  var voted = !!it.voted_by_me;
+  var confirm = await ctx.ui.showDialog({
+    title: (it.media || it).title || '求片',
+    message: voted ? '你已为它投票，是否取消投票？' : '为这条求片投票支持？',
+    buttons: [{ id: 'go', label: voted ? '取消投票' : '投票' }, { id: 'cancel', label: '返回' }]
   });
-  if (act !== 'vote') return;
-
-  var f = await ctx.ui.showForm({
-    title: '投票支持',
-    fields: [{ key: 'target', label: '选择求片', type: 'select',
-      options: list.map(function (it2, i2) {
-        var m2 = it2.media || it2;
-        var nm2 = m2.title || m2.original_title || ('tmdb#' + (m2.tmdb_id || it2.tmdb_id || '?'));
-        return { value: i2, label: (i2 + 1) + '. ' + nm2 + (it2.voted_by_me ? '（已投，再选=取消）' : '') };
-      }) }],
-    submitLabel: '确定', cancelLabel: '取消'
-  });
-  if (!f) return;
-  var idx = Number(f.target) || 0;
-  var target = list[idx];
-  if (!target) return;
-  var voted = !!target.voted_by_me;
-  var votePath = '/api/v1/media-requests/' + encodeURIComponent(target.id) + '/vote';
+  if (confirm !== 'go') return;
+  var votePath = '/api/v1/media-requests/' + encodeURIComponent(it.id) + '/vote';
   var vr = voted ? await apiReq('delete', votePath) : await apiReq('post', votePath, {});
   if (vr.error) { ctx.ui.showToast((voted ? '取消投票' : '投票') + '失败：' + errText(vr)); return; }
   ctx.ui.showToast(voted ? '已取消投票' : '投票成功');

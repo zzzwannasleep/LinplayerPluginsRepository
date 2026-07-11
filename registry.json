@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-11T17:36:55Z",
+  "updatedAt": "2026-07-11T17:51:13Z",
   "plugins": [
     {
       "id": "com.linplayer.cf-proxy",
@@ -120,7 +120,7 @@
     {
       "id": "com.linplayer.uhdnow-request",
       "name": "UHDNow 求片",
-      "description": "在 App 内提交 UHDNow 求片 / 追新，查看我的求片与全部求片列表，并为热门求片投票。搜索、选片、提交全程下拉选择。对应官网 /user/help/media-requests。",
+      "description": "在 App 内提交 UHDNow 求片 / 追新：搜索后弹出带海报的结果列表点选，填说明提交；查看我的求片与全部求片（带海报），为热门求片投票。对应官网 /user/help/media-requests。",
       "author": {
         "name": "LinPlayer"
       },
@@ -138,19 +138,19 @@
       "runtime": "js",
       "versions": [
         {
-          "version": "1.0.2",
+          "version": "1.0.3",
           "channel": "stable",
           "apiVersion": 1,
           "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-request/1.0.2/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-request-1.0.2.ipk"
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-request/1.0.3/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-request-1.0.3.ipk"
         }
       ]
     },
     {
       "id": "com.linplayer.uhdnow-speed",
       "name": "UHDNow 线路测速",
-      "description": "选择一条 UHDNow 线路测下载速度，全程进度可视化（实时速度 + 进度条）。测试大小对标官网 32/64/100 MiB。需登录网站账号，会消耗账户流量。",
+      "description": "从线路列表里选一条 UHDNow 线路测下载速度，全程进度可视化（进度条 + 实时速度）。测试大小对标官网 32/64/100 MiB。需登录网站账号，会消耗账户流量。",
       "author": {
         "name": "LinPlayer"
       },
@@ -168,12 +168,12 @@
       "runtime": "js",
       "versions": [
         {
-          "version": "1.0.2",
+          "version": "1.0.3",
           "channel": "stable",
           "apiVersion": 1,
           "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-speed/1.0.2/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-speed-1.0.2.ipk"
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-speed/1.0.3/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-speed-1.0.3.ipk"
         }
       ]
     },

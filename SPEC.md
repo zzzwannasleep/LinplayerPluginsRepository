@@ -137,7 +137,18 @@ await ctx.ui.openPage(pageId, params);
 const id = await ctx.ui.showProgress({ title, message, percent }); // percent 0-100，缺省=不定态
 await ctx.ui.updateProgress(id, { message, percent });
 await ctx.ui.closeProgress(id);
+
+// 列表选择器：可滚动、每项可带缩略图（如 TMDB 海报），返回被点条目的 id（或 null）。
+const id = await ctx.ui.showList({
+  title,
+  items: [{ id, title, subtitle, image }], // image=图片URL，由宿主加载
+  cancelLabel
+});
 ```
+
+> **关于 30s 超时**：宿主用「空转看门狗」判定失控——插件**等待用户填表 / 网络请求期间不计时**，
+> 只有长时间既无宿主交互又不返回（纯 JS 死循环）才会被判超时。因此交互式多步流程（搜索→选择→提交）
+> 想花多久都行，不会被误杀。
 
 ### ctx.emby
 ```js
