@@ -107,7 +107,10 @@ async function apiReq(method, path, body) {
       token = r.token; continue;
     }
     var bm = (rb && rb.msg) ? rb.msg : ('HTTP ' + res.status);
-    ctx.log.warn(method + ' ' + path + ' 业务失败: HTTP ' + res.status + ' / ' + bm);
+    var full = '';
+    try { full = JSON.stringify(rb); } catch (e) { full = String(rb); }
+    ctx.log.warn(method + ' ' + path + ' 业务失败: HTTP ' + res.status + ' / ' + bm +
+      ' / body=' + String(full).slice(0, 600));
     return { error: 'BIZ', msg: bm };
   }
   return { error: 'NETWORK' };
