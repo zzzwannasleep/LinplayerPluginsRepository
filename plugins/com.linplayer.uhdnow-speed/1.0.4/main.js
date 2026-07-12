@@ -41,7 +41,7 @@ async function login() {
     try {
       var res = await ctx.http.post(API_BASE + '/api/v1/auth/login',
         { username: creds.username, password: creds.password },
-        { headers: { 'Content-Type': 'application/json', 'User-Agent': UA } });
+        { headers: { 'Content-Type': 'application/json', 'Origin': API_BASE, 'Referer': API_BASE + '/', 'User-Agent': UA } });
       var b = res.body;
       if (res.status === 200 && b && b.ok && b.data && b.data.token) {
         await ctx.storage.set('token', b.data.token);
@@ -70,15 +70,23 @@ function getHeader(res, name) {
   for (var k in h) { if (k.toLowerCase() === lower) return h[k]; }
   return null;
 }
+// 对齐官网浏览器请求：除 Authorization 头外，同源 fetch 还会自动带 Authorization Cookie
+// 与 Origin/Referer；dio 无浏览器禁用头限制，显式补齐以避免部分接口 500。
+function authHeaders(token) {
+  return {
+    'Authorization': token, 'Cookie': 'Authorization=' + token,
+    'Origin': API_BASE, 'Referer': API_BASE + '/', 'User-Agent': UA
+  };
+}
 function authGet(url, token, discard) {
-  var o = { headers: { 'Authorization': token, 'User-Agent': UA } };
+  var o = { headers: authHeaders(token) };
   if (discard) o.discardBody = true;
   return ctx.http.get(url, o);
 }
 function authPost(url, body, token) {
-  return ctx.http.post(url, body, {
-    headers: { 'Content-Type': 'application/json', 'Authorization': token, 'User-Agent': UA }
-  });
+  var h = authHeaders(token);
+  h['Content-Type'] = 'application/json';
+  return ctx.http.post(url, body, { headers: h });
 }
 async function fetchLines(token) {
   var res = await authGet(API_BASE + '/api/v1/subscriptions/domains', token);

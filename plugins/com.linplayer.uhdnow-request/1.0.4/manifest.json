@@ -1,6 +1,6 @@
 {
   "id": "com.linplayer.uhdnow-request",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "name": "UHDNow 求片",
   "author": "LinPlayer",
   "description": "在 App 内提交 UHDNow 求片 / 追新：搜索后弹出带海报的结果列表点选，填说明提交；查看我的求片与全部求片（带海报），为热门求片投票。对应官网 /user/help/media-requests。",

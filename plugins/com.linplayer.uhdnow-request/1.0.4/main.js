@@ -51,7 +51,7 @@ async function login() {
     try {
       var res = await ctx.http.post(API_BASE + '/api/v1/auth/login',
         { username: creds.username, password: creds.password },
-        { headers: { 'Content-Type': 'application/json', 'User-Agent': UA } });
+        { headers: { 'Content-Type': 'application/json', 'Origin': API_BASE, 'Referer': API_BASE + '/', 'User-Agent': UA } });
       var b = res.body;
       if (res.status === 200 && b && b.ok && b.data && b.data.token) {
         await ctx.storage.set('token', b.data.token);
@@ -81,7 +81,14 @@ async function apiReq(method, path, body) {
   for (var i = 0; i < 2; i++) {
     var res;
     try {
-      var opts = { headers: { 'Content-Type': 'application/json', 'Authorization': token, 'User-Agent': UA } };
+      // 官网前端跑在 www.uhdnow.com 同源，fetch 会自动带上 Authorization Cookie(前端 k() 设置的)
+      // 以及 Origin/Referer；部分接口(如 search 服务端代理 TMDB)依赖它，否则 500「服务端错误」。
+      // dio 无浏览器的禁用头限制，可显式补齐这些头以对齐浏览器请求。
+      var opts = { headers: {
+        'Content-Type': 'application/json', 'Authorization': token,
+        'Cookie': 'Authorization=' + token, 'Origin': API_BASE, 'Referer': API_BASE + '/',
+        'User-Agent': UA
+      } };
       if (method === 'get') res = await ctx.http.get(API_BASE + path, opts);
       else if (method === 'delete') res = await ctx.http.delete(API_BASE + path, opts);
       else res = await ctx.http.post(API_BASE + path, body || {}, opts);
@@ -100,7 +107,7 @@ async function apiReq(method, path, body) {
       token = r.token; continue;
     }
     var bm = (rb && rb.msg) ? rb.msg : ('HTTP ' + res.status);
-    ctx.log.warn(method + ' ' + path + ' 业务失败: ' + bm);
+    ctx.log.warn(method + ' ' + path + ' 业务失败: HTTP ' + res.status + ' / ' + bm);
     return { error: 'BIZ', msg: bm };
   }
   return { error: 'NETWORK' };
