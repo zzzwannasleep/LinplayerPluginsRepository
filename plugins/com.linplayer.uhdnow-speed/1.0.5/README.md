@@ -10,9 +10,12 @@
 
 ## 原理
 
-登录 → `GET /subscriptions/domains` 取线路 → `.../resolve` 解析真实基址 → 分段（每段 8 MiB，
-每段独立 `speed-test/session`）`GET .../speed-test/download` 并计时，用 `ctx.http` 的 discardBody
-按流丢弃只计字节 → 每段刷新进度面板 → `POST /speed-test/report` 上报一次。总下载量 = 所选大小。
+登录 → `GET /subscriptions/domains` 取线路（列表只显示名称）→ `.../resolve` 解析真实基址 →
+`POST .../speed-test/session {size_mib}` 建会话 → `GET .../speed-test/download?size_mb=` 单次下载并计时
+（用 `ctx.http` 的 discardBody 按流丢弃只计字节，不占插件内存）→ `POST /speed-test/report` 上报。
+
+> 服务端只接受 `size_mib` ∈ 32/64/100，且下载 `size_mb` 必须等于会话 `size_mib`，故为单会话单次
+> 下载（不分段）。单请求内拿不到实时百分比，下载阶段用不定态进度条表示"正在测速"。
 
 ## 注意
 

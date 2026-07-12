@@ -19,8 +19,7 @@
 
 var API_BASE = 'https://www.uhdnow.com';
 var UA = 'Mozilla/5.0';
-var SIZE_OPTIONS = [32, 64, 100]; // MiB，对标官网 /speed
-var CHUNK_MIB = 8;                // 每段大小，用于驱动进度条
+var SIZE_OPTIONS = [32, 64, 100]; // MiB，对标官网 /speed（服务端只接受这几个值）
 
 // ---------- 登录 ----------
 async function getCreds() {
@@ -119,11 +118,11 @@ async function openSpeedTest() {
   }
   if (!lines.length) { ctx.ui.showToast('没有可用线路'); return; }
 
-  // 从列表选一条线路
+  // 从列表选一条线路（只显示线路名称，不暴露线路地址）
   var lineId = await ctx.ui.showList({
     title: '选择测速线路',
     items: lines.map(function (l) {
-      return { id: String(l.id), title: l.name || l.domain || ('线路#' + l.id), subtitle: l.domain || '' };
+      return { id: String(l.id), title: l.name || ('线路#' + l.id) };
     }),
     cancelLabel: '取消'
   });
@@ -158,75 +157,56 @@ async function runTest(line, sizeMib, token) {
   if (!(rr.status === 200 && rb && rb.ok && rb.data && rb.data.domain)) return fail('线路解析失败：' + ((rb && rb.msg) || rr.status));
   var base = rb.data.domain;
 
-  var nChunks = Math.max(1, Math.ceil(sizeMib / CHUNK_MIB));
-  var totalBytes = 0, totalMs = 0, peak = 0, lastSess = null;
-
-  for (var i = 0; i < nChunks; i++) {
-    var chunk = Math.min(CHUNK_MIB, sizeMib - i * CHUNK_MIB);
-    if (chunk <= 0) break;
-
-    await ctx.ui.updateProgress(pid, {
-      percent: 8 + Math.round(87 * (i / nChunks)),
-      message: '测速中（第 ' + (i + 1) + '/' + nChunks + ' 段）…' +
-        (totalBytes > 0 ? ('\n平均 ' + fmt(totalBytes * 8 / (totalMs / 1000) / 1e6) + ' Mbps') : '')
-    });
-
-    var sr;
-    try { sr = await authPost(joinUrl(base, '/api/v1/speed-test/session'), { parent_domain_id: line.id, size_mib: chunk }, token); }
-    catch (e) { return fail(/白名单/.test(String(e)) ? '线路域名未授权（请反馈开发者）' : '建立会话失败'); }
-    var sb = sr.body;
-    if (sr.status === 403) return fail('线路不可用或流量不足');
-    if (!(sr.status === 200 && sb && sb.ok && sb.data && sb.data.session_id && sb.data.report_token)) {
-      return fail('建立会话失败：' + ((sb && sb.msg) || sr.status));
-    }
-    lastSess = sb.data;
-
-    var dlUrl = joinUrl(base, '/api/v1/speed-test/download') +
-      '?size_mb=' + chunk + '&session_id=' + encodeURIComponent(lastSess.session_id);
-    var t0 = Date.now();
-    var dr;
-    try { dr = await authGet(dlUrl, token, true); }
-    catch (e) { return fail('下载测速失败'); }
-    var ms = Date.now() - t0;
-    if (dr.status === 403) return fail('流量不足');
-    if (dr.status !== 200) return fail('下载测速失败（HTTP ' + dr.status + '）');
-    if (ms <= 0) ms = 1;
-
-    var bytes = (typeof dr.bytes === 'number' && dr.bytes > 0) ? dr.bytes
-      : (Number(getHeader(dr, 'content-length')) || (chunk * 1024 * 1024));
-    var curMbps = bytes * 8 / (ms / 1000) / 1e6;
-    totalBytes += bytes; totalMs += ms;
-    if (curMbps > peak) peak = curMbps;
-    var avgMbps = totalBytes * 8 / (totalMs / 1000) / 1e6;
-
-    await ctx.ui.updateProgress(pid, {
-      percent: 8 + Math.round(87 * ((i + 1) / nChunks)),
-      message: '已测 ' + fmt(totalBytes / 1048576) + ' / ' + sizeMib + ' MiB\n' +
-        '当前 ' + fmt(curMbps) + ' Mbps\n平均 ' + fmt(avgMbps) + ' Mbps'
-    });
+  // 建测速会话：size_mib 必须是官网允许值(32/64/100),下载 size_mb 必须与之相同——
+  // 服务端会校验,不匹配就 "参数验证失败" 或只回几十字节。故单会话单次下载,不分段。
+  await ctx.ui.updateProgress(pid, { message: '建立测速会话…', percent: 22 });
+  var sr;
+  try { sr = await authPost(joinUrl(base, '/api/v1/speed-test/session'), { parent_domain_id: line.id, size_mib: sizeMib }, token); }
+  catch (e) { return fail(/白名单/.test(String(e)) ? '线路域名未授权（请反馈开发者）' : '建立会话失败'); }
+  var sb = sr.body;
+  if (sr.status === 403) return fail('线路不可用或流量不足');
+  if (!(sr.status === 200 && sb && sb.ok && sb.data && sb.data.session_id && sb.data.report_token)) {
+    return fail('建立会话失败：' + ((sb && sb.msg) || sr.status));
   }
+  var sess = sb.data;
 
-  var avg = totalBytes * 8 / (totalMs / 1000) / 1e6;
-  var mBs = totalBytes / (totalMs / 1000) / 1048576;
+  // 下载测速：单次请求下载整份(discardBody 按流丢弃只计字节,不占插件内存)。
+  // 单请求内拿不到实时进度,故这段用不定态进度条表示"正在测速"。
+  await ctx.ui.updateProgress(pid, { message: '下载测速中（' + sizeMib + ' MiB），请稍候…' });
+  var dlUrl = joinUrl(base, '/api/v1/speed-test/download') +
+    '?size_mb=' + sizeMib + '&session_id=' + encodeURIComponent(sess.session_id);
+  var t0 = Date.now();
+  var dr;
+  try { dr = await authGet(dlUrl, token, true); }
+  catch (e) { return fail('下载测速失败'); }
+  var ms = Date.now() - t0;
+  if (dr.status === 403) return fail('流量不足');
+  if (dr.status !== 200) return fail('下载测速失败（HTTP ' + dr.status + '）');
+  if (ms <= 0) ms = 1;
 
-  if (lastSess) {
-    try {
-      await authPost(API_BASE + '/api/v1/speed-test/report', {
-        session_id: lastSess.session_id, report_token: lastSess.report_token,
-        average_mbps: Number(avg.toFixed(3)), peak_mbps: Number(peak.toFixed(3)),
-        elapsed_ms: Math.round(totalMs), sample_count: nChunks, server_downloaded_bytes: totalBytes
-      }, token);
-    } catch (e) { /* ignore */ }
-  }
+  var bytes = (typeof dr.bytes === 'number' && dr.bytes > 0) ? dr.bytes
+    : (Number(getHeader(dr, 'content-length')) || (sizeMib * 1024 * 1024));
+  var secs = ms / 1000;
+  var avg = bytes * 8 / secs / 1e6;        // Mbps
+  var mBs = bytes / secs / 1048576;        // MB/s
+
+  // 上报（尽力而为）
+  try {
+    await authPost(API_BASE + '/api/v1/speed-test/report', {
+      session_id: sess.session_id, report_token: sess.report_token,
+      average_mbps: Number(avg.toFixed(3)), peak_mbps: Number(avg.toFixed(3)),
+      elapsed_ms: Math.round(ms), sample_count: 1, server_downloaded_bytes: bytes
+    }, token);
+  } catch (e) { /* ignore */ }
 
   await ctx.ui.updateProgress(pid, { percent: 100, message: '完成' });
-  await ctx.sleep(200);
+  await ctx.sleep(150);
   ctx.ui.closeProgress(pid);
 
   await ctx.ui.showDialog({
     title: '测速结果 · ' + name,
     message: '平均速度：' + fmt(avg) + ' Mbps（' + fmt(mBs) + ' MB/s）\n' +
-      '峰值速度：' + fmt(peak) + ' Mbps\n测试大小：' + sizeMib + ' MiB\n\n注：客户端粗测，仅供参考。',
+      '测试大小：' + sizeMib + ' MiB\n用时：' + fmt(secs) + ' 秒\n\n注：客户端粗测，仅供参考。',
     buttons: [{ id: 'ok', label: '完成' }]
   });
 }
