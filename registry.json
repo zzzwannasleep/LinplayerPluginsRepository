@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-12T12:38:15Z",
+  "updatedAt": "2026-07-12T12:53:16Z",
   "plugins": [
     {
       "id": "com.linplayer.cf-proxy",
@@ -138,12 +138,12 @@
       "runtime": "js",
       "versions": [
         {
-          "version": "1.0.6",
+          "version": "1.0.7",
           "channel": "stable",
           "apiVersion": 1,
           "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-request/1.0.6/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-request-1.0.6.ipk"
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-request/1.0.7/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-request-1.0.7.ipk"
         }
       ]
     },

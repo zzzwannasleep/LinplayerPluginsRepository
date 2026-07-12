@@ -30,7 +30,13 @@ var STATUS_LABEL = {
 };
 var TYPE_LABEL = { missing: '求片', refresh: '追新' };
 function mediaTypeLabel(t) { return t === 'movie' ? '电影' : (t === 'tv' ? '剧集' : (t || '')); }
-function posterUrl(p) { return p ? (TMDB_IMG + p) : ''; }
+// poster_path 有三种形态：完整 URL(TMDB 直链)/ uhdnow 自托管(/img/...) / 裸 TMDB 路径。
+function posterUrl(p) {
+  if (!p) return '';
+  if (/^https?:\/\//.test(p)) return p.replace(/\/t\/p\/(original|w\d+)\//, '/t/p/w200/'); // TMDB 直链→缩略图
+  if (p.indexOf('/img/') === 0) return API_BASE + p;                                        // uhdnow 自托管
+  return TMDB_IMG + (p.charAt(0) === '/' ? p : '/' + p);                                     // 裸 TMDB 路径
+}
 
 // ---------- 登录 ----------
 async function getCreds() {
@@ -201,6 +207,8 @@ async function doSearch() {
       if (it.year) sub.push(String(it.year));
       sub.push(mediaTypeLabel(it.media_type));
       if (it.original_title && it.original_title !== it.title) sub.push(it.original_title);
+      // 已在片库且不可求新片的条目标出来，避免白提交(服务端会回「媒体库中已存在该影片」)
+      if (it.allowed_to_create === false) sub.push('已在库');
       return {
         id: String(i),
         title: it.title || it.original_title || ('tmdb#' + it.tmdb_id),
