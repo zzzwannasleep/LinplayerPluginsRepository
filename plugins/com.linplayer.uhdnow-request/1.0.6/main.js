@@ -175,7 +175,21 @@ async function doSearch() {
   ctx.ui.showToast('搜索中…');
   var r = await apiReq('post', '/api/v1/media-requests/search',
     { keyword: keyword, request_type: requestType, page: 1, page_size: 12 });
-  if (r.error) { ctx.ui.showToast('搜索失败：' + errText(r)); return; }
+  if (r.error) {
+    // 已实测:官网『求新片』(missing)搜索目前服务端故障(TMDB 搜索路径 500 兜底为「服务端错误」),
+    // 与插件无关(官网同样失败);『追新』(refresh)正常。给出清晰指引而非裸露错误。
+    if (requestType === 'missing' && /服务端错误|服务器错误/.test(r.msg || '')) {
+      await ctx.ui.showDialog({
+        title: '『求新片』搜索暂不可用',
+        message: '官网求新片(missing)搜索当前是服务端故障——用同样的请求在官网网页搜也会失败,不是插件问题。\n\n' +
+          '你可以：\n· 改用「追新」搜索片库已有内容并求更新(正常可用)\n· 或稍后再试 / 联系管理员修复求新片搜索',
+        buttons: [{ id: 'ok', label: '知道了' }]
+      });
+      return;
+    }
+    ctx.ui.showToast('搜索失败：' + errText(r));
+    return;
+  }
   var list = pickList(r.body).slice(0, 20);
   if (!list.length) { ctx.ui.showToast('没有找到「' + keyword + '」'); return; }
 
