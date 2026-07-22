@@ -74,7 +74,7 @@
     },
     "httpAllowedHosts": {
       "type": "array",
-      "description": "HTTPS 域名白名单（空=不限 host，但仍强制 HTTPS）。",
+      "description": "HTTPS 域名白名单，fail-closed（空/缺省=拒绝所有出网，不是放行）。支持 *.example.com 子域通配（不覆盖主域本身）。",
       "items": { "type": "string", "minLength": 1, "maxLength": 255 },
       "maxItems": 200
     },

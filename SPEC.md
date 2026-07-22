@@ -94,8 +94,14 @@ const res = await ctx.http.get(url, { headers, discardBody: true });
 ```
 
 > **白名单是 fail-closed 的**：`httpAllowedHosts` 为空/缺省 = **拒绝所有主机**（不是放行）。
-> 任何要联网的插件都必须显式列出会访问的 host（精确匹配，无通配符），否则每次请求都抛
-> `域名不在白名单内`。重定向后的最终 host 也必须在白名单内。
+> 任何要联网的插件都必须显式列出会访问的 host，否则每次请求都抛 `域名不在白名单内`。
+> 重定向后的最终 host 也必须在白名单内。
+>
+> 支持 `*.example.com` 形式的**子域通配**，用于服务端动态分配、事先枚举不全的域名
+> （如线路节点）。规则：
+> - 只匹配子域，`*.example.com` **不覆盖** `example.com` 本身 —— 主域要单独列一条；
+> - 要求点分隔，`evil-example.com` 不会命中；
+> - 只认 `*.` 开头，裸 `*` 不是通配符（否则一个字符就把 fail-closed 击穿成放行全网）。
 
 ### ctx.storage（需 `storage`，<=5MB）
 ```js
