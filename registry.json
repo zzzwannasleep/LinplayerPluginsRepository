@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-12T12:53:16Z",
+  "updatedAt": "2026-07-22T04:36:22Z",
   "plugins": [
     {
       "id": "com.linplayer.cf-proxy",
@@ -150,7 +150,7 @@
     {
       "id": "com.linplayer.uhdnow-speed",
       "name": "UHDNow 线路测速",
-      "description": "从线路列表里选一条 UHDNow 线路测下载速度，全程进度可视化（进度条 + 实时速度）。测试大小对标官网 32/64/100 MiB。需登录网站账号，会消耗账户流量。",
+      "description": "从线路列表里选一条 UHDNow 线路测下载速度，全程进度可视化。测试大小对标官网 32/64/100 MiB。需登录网站账号，会消耗账户流量。",
       "author": {
         "name": "LinPlayer"
       },
@@ -168,12 +168,12 @@
       "runtime": "js",
       "versions": [
         {
-          "version": "1.0.5",
+          "version": "1.0.7",
           "channel": "stable",
           "apiVersion": 1,
           "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-speed/1.0.5/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-speed-1.0.5.ipk"
+          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-speed/1.0.7/manifest.json",
+          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-speed-1.0.7.ipk"
         }
       ]
     },
