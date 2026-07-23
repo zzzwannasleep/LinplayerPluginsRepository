@@ -24,14 +24,18 @@ jobs:
         run: python tools/validate_repo.py
 
       # 产物必须是当前源码的产物。registry.json 和 packages/*.ipk 都在版本库里，
-      # 改完插件忘了跑 build.py 的话，市场拿到的还是旧包 —— 而且一切看起来都正常。
+      # 改完插件忘了跑 build.py 的话市场拿到的还是旧包，而且一切看起来都正常。
       #
-      # .ipk 是可复现打包（时间戳/顺序/权限位全钉死），所以重打一遍应该逐字节一致。
-      - name: 检查已提交的产物与源码一致
-        run: |
-          python tools/build.py
-          git diff --exit-code -- registry.json packages/ \
-            || { echo "::error::registry.json 或 packages/ 与 plugins/ 不一致，请跑 python tools/build.py 后重新提交"; exit 1; }
+      # 上一版这里是「重打一遍看有没有 diff」，前提是打包逐字节可复现。
+      # 时间戳 / 文件顺序 / 权限位 / create_system 都能钉死，但 **deflate 压缩流跨
+      # zlib 版本不保证一致**（实测 Windows 与本 runner 就不同），所以那个检查
+      # 本地永远绿、CI 永远红，diff 里还只有一串哈希在变，看不出任何线索。
+      #
+      # 现在分两头查，都平台无关：
+      #   - 包里的内容 == 源码：在 validate_repo 里逐文件比（能点名是哪个文件）
+      #   - registry 的元数据是最新的：build.py --check（不写文件、不打包）
+      - name: 检查 registry.json 是最新的
+        run: python tools/build.py --check
 
   pages:
     needs: validate

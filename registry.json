@@ -25,7 +25,7 @@
           "version": "2.0.0",
           "api_version": 2,
           "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.hello-2.0.0.ipk",
-          "sha256": "4b6ce6b82ce11a20ee24c3a3f4dbd5cba82584b3a50fd4033ac3b24c3b2ef358"
+          "sha256": "2c9528cf41533ccf6a9be1536c32cd98cea9ea7146383bf4944d055f1fa0a503"
         }
       ],
       "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzJmNmRmNiIvPgogIDxwYXRoIGQ9Ik0xNCA0NFYyMGg2djloMTB2LTloNnYyNGgtNnYtOUgyMHY5eiIgZmlsbD0iI2ZmZiIvPgogIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNDEiIHI9IjMuNSIgZmlsbD0iI2ZmZDE2NiIvPgo8L3N2Zz4K",
@@ -73,7 +73,7 @@
           "version": "1.0.0",
           "api_version": 2,
           "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.m3u-1.0.0.ipk",
-          "sha256": "7c20ec92751fa9940f7dc03c025cf911acba4b36001b2222912779118f48fd22"
+          "sha256": "c12580b8f973f9247e4027d323316c028fdce9398eaf88e2295f98175fb902d8"
         }
       ],
       "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iI2UwNTMzZCIvPgogIDxwYXRoIGQ9Ik0yNCAxOGwyMiAxNC0yMiAxNHoiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTIgMjB2MjQiIHN0cm9rZT0iI2ZmZDE2NiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+Cg==",
@@ -121,7 +121,7 @@
           "version": "1.0.0",
           "api_version": 2,
           "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.sandbox-demo-1.0.0.ipk",
-          "sha256": "09dea3088584b8fda4d6ed5539c4d0c661a9fd8a7df8711b93f5f2c102ae8bf9"
+          "sha256": "7acc545b0e4e2fde2f90656ea3b3daa642498240b80bd6ee979658aa04ef20e1"
         }
       ],
       "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzZiNGRmNiIvPgogIDxyZWN0IHg9IjEzIiB5PSIxNiIgd2lkdGg9IjM4IiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cGF0aCBkPSJNMTMgMjVoMzgiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPGNpcmNsZSBjeD0iMTkiIGN5PSIyMC41IiByPSIxLjgiIGZpbGw9IiNmZmYiLz4KICA8cGF0aCBkPSJNMjAgNDJsNy04IDYgNSA1LTcgNiAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZkMTY2IiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+Cg==",
@@ -162,7 +162,7 @@
           "version": "2.0.0",
           "api_version": 2,
           "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.telegram-notify-2.0.0.ipk",
-          "sha256": "971d1b33f968e092e28da588b5771f1aa43a653cfca9a16c22e8f155fcf5bcee"
+          "sha256": "7bdb8bc77d7e63e7580dfbc58998c4216c08788da76f451f39bbab2bf7b1b9a0"
         }
       ],
       "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzIyOWVkOSIvPgogIDxwYXRoIGQ9Ik0xMyAzMmwzOC0xNC02IDMwLTEyLTktNSA4LTItMTJ6IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTI4IDM1bDE3LTEzLTEzIDE2eiIgZmlsbD0iI2NmZThmNyIvPgo8L3N2Zz4K",
@@ -207,7 +207,7 @@
           "version": "1.0.0",
           "api_version": 2,
           "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-1.0.0.ipk",
-          "sha256": "4f7bddcf177e7d6bc51cf0c37c61261ddf8bf23d0cfa9cd20c4d46bb242092d9"
+          "sha256": "0c7f888549a5b9faedaf0ac2977c77133a18cabe049e8259bc0120376208d1cb"
         }
       ],
       "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzFmMjkzNyIvPgogIDxwYXRoIGQ9Ik0zNCAxMkwxOCAzNmgxMmwtNCAxNiAxOC0yNkgzMnoiIGZpbGw9IiNmZmQxNjYiLz4KPC9zdmc+Cg==",
@@ -264,7 +264,7 @@
           "version": "1.0.0",
           "api_version": 2,
           "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.ui-kit-1.0.0.ipk",
-          "sha256": "c8b694025606cf2497c150e136aa16cfbf91d3b7e901d4c4e34aa174204d17c2"
+          "sha256": "4ae086ce476b1d28e1dd5d18b0d13a0af9cce60ce2a1d0292cdacbf7178a8650"
         }
       ],
       "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzBlOWY2ZSIvPgogIDxyZWN0IHg9IjE0IiB5PSIxNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2ZmZiIvPjxyZWN0IHg9IjM0IiB5PSIxNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iLjY1Ii8+PHJlY3QgeD0iMTQiIHk9IjM0IiB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuNjUiLz48cmVjdCB4PSIzNCIgeT0iMzQiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNmZmQxNjYiLz4KPC9zdmc+Cg==",
