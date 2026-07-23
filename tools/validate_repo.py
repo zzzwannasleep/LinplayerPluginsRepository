@@ -70,6 +70,10 @@ SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
 # 市场都要多背这些字节 —— 内联的代价是它跟着索引走，省不掉。
 MAX_ICON_BYTES = 64 * 1024
 
+# 不进包的文件。必须和 pack_plugin._SKIP_NAMES 一致 —— 对不上的话「包内容 vs 源码」
+# 那个检查会把正常情况报成不一致。
+_PACK_SKIP = {".DS_Store", "Thumbs.db", "CHANGELOG.md"}
+
 
 class Report:
     def __init__(self):
@@ -307,6 +311,44 @@ def validate_repo(root, rep):
                 rep.err("registry.json", f"{pid}@{ver}: sha256 与包不符（包变了但没重跑 build.py？）")
             if "package_url" not in v:
                 rep.err("registry.json", f"{pid}@{ver}: 缺少 package_url（注意是 snake_case）")
+            _check_package_contents(root, pid, ver, ipk, rep)
+
+
+def _check_package_contents(root, pid, ver, ipk, rep):
+    """已提交的 .ipk 里装的必须就是 plugins/<id>/<ver>/ 里的东西。
+
+    ★ 这里比的是**内容**，不是字节。
+      原本 CI 干的是「重新打一遍看有没有 diff」，前提是打包逐字节可复现 ——
+      时间戳、文件顺序、权限位、create_system 都能钉死，但 **deflate 压缩流本身
+      跨 zlib 版本不保证一致**（实测 Windows 与 GitHub Actions 的 Linux runner
+      就不同）。于是那个检查在本地永远绿、在 CI 永远红，而 diff 里只有一串哈希在变，
+      看不出任何线索。
+
+      真正要保证的从来不是字节相同，是「包里的东西就是源码」。逐文件比内容既
+      平台无关，又比字节比对更精确 —— 它能指出到底是哪个文件对不上。
+    """
+    import zipfile  # noqa: PLC0415
+
+    src = root / "plugins" / pid / ver
+    want = {
+        f.relative_to(src).as_posix(): f.read_bytes()
+        for f in sorted(src.rglob("*"))
+        if f.is_file() and f.name not in _PACK_SKIP
+    }
+    try:
+        with zipfile.ZipFile(ipk) as z:
+            have = {n: z.read(n) for n in z.namelist()}
+    except Exception as e:  # noqa: BLE001
+        rep.err("packages/", f"{ipk.name}: 打不开（{e}）")
+        return
+
+    for missing in sorted(set(want) - set(have)):
+        rep.err("packages/", f"{ipk.name}: 少了 {missing}（改完插件忘了跑 build.py？）")
+    for extra in sorted(set(have) - set(want)):
+        rep.err("packages/", f"{ipk.name}: 多了 {extra}")
+    for name in sorted(set(want) & set(have)):
+        if want[name] != have[name]:
+            rep.err("packages/", f"{ipk.name}: {name} 的内容和源码不一致（忘了跑 build.py？）")
 
 
 # ──────────────────────────── 自检 ────────────────────────────

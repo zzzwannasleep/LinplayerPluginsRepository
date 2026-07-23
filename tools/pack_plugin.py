@@ -55,8 +55,13 @@ def pack(plugin_dir: Path, out_dir: Path) -> Path:
         for f in files:
             zi = zipfile.ZipInfo(f.relative_to(plugin_dir).as_posix(), date_time=_FIXED_DATE)
             zi.compress_type = zipfile.ZIP_DEFLATED
-            # 权限位也要钉死，否则 Windows 和 Linux 打出来的包字节不同 → sha256 不同。
+            # 权限位要钉死，否则 Windows 和 Linux 打出来的包字节不同 → sha256 不同。
             zi.external_attr = 0o644 << 16
+            # ★ create_system 也必须钉死。ZipInfo 默认按当前平台填（Windows=0、Unix=3），
+            #   这一个字节写进 zip 中央目录，于是同样的源码在两个平台上产出不同的
+            #   sha256。症状是本地 build 一切正常、CI 的「产物一致性」检查红，
+            #   而 diff 里只有一串哈希在变，看不出任何线索。统一按 Unix。
+            zi.create_system = 3
             z.writestr(zi, f.read_bytes())
     return ipk
 

@@ -1,6 +1,6 @@
 # LinPlayer 插件仓库
 
-LinPlayer 的官方插件源。市场页：<https://zzzwannasleep.github.io/LinplayerPluginsRepository/>
+LinPlayer 的官方插件源。市场页：<https://lplugins.902541.xyz>
 
 App 里的插件市场默认订阅的就是这个仓库的 `registry.json`。
 
@@ -53,9 +53,10 @@ python tools/pack_plugin.py plugins/<id>/<ver>/   # 单个打包，顺便打印 
 
 ## 几条不显然的规矩
 
-**产物必须可复现。** 打包的时间戳、文件顺序、权限位全部钉死，索引里没有任何时间戳。
-同样的源码永远产出逐字节相同的 `.ipk` 和 `registry.json` —— CI 靠「重跑一遍看有没有
-diff」判断提交的产物是不是当前源码的产物。
+**打包是确定性的，但不保证跨平台逐字节相同。** 时间戳、文件顺序、权限位、
+`create_system` 都钉死了，索引里也没有任何时间戳；但 deflate 压缩流跨 zlib 版本
+不保证一致（Windows 和 Linux 实测就不同）。所以 CI **不比字节**，而是逐文件比
+`.ipk` 里的内容和 `plugins/` 里的源码 —— 平台无关，而且能直接点名是哪个文件对不上。
 
 **索引里的版本键是 snake_case。** `package_url` 不是 `packageUrl`。写成驼峰会被 App
 静默忽略，整条插件从市场里消失而两边都不报错。`author` 同理，必须是字符串。

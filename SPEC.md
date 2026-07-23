@@ -397,13 +397,19 @@ handler，得在那条 panel 上登记：
 
 ## 分发与完整性
 
-registry.json 和 .ipk 都走 **GitHub raw**。不要「优化」到 Cloudflare：
-国内有地方会阻断 CF，GitHub 反而更稳。
+**App 里装插件走的是 GitHub raw**：`registry.json` 和 `.ipk` 都从
+`raw.githubusercontent.com` 取，不要「优化」到 Cloudflare —— 国内有地方会阻断 CF，
+GitHub 反而更稳。
+
+市场**网站**是另一回事：它挂在 <https://lplugins.902541.xyz>（GitHub Pages + 自定义
+域名）。网站只负责浏览和文档，装插件的那条链路不经过它，所以域名怎么解析不影响安装。
 
 包只做 **sha256 校验和**，不做代码签名。校验和保证你拿到的和仓库里的是同一份，
 **不代表内容被审计过**。
 
-打包是可复现的（时间戳、顺序、权限位全部钉死），所以同样的源码永远算出同样的哈希。
+打包是确定性的（时间戳、文件顺序、权限位、`create_system` 全部钉死），但
+**不保证跨平台逐字节相同** —— deflate 压缩流跨 zlib 版本会变。所以仓库 CI 比的是
+包里的**内容**和源码是否一致，不是包的字节。
 
 ## 目前的限制
 

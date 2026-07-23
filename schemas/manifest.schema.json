@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://zzzwannasleep.github.io/LinplayerPluginsRepository/schemas/manifest.schema.json",
+  "$id": "https://lplugins.902541.xyz/schemas/manifest.schema.json",
   "title": "LinPlayer 插件清单 (apiVersion 2)",
   "description": "编辑器补全用。真正的校验闸门是 tools/validate_repo.py（带自检），规则源头是宿主 crates/core/src/plugins/manifest.rs。",
   "type": "object",
