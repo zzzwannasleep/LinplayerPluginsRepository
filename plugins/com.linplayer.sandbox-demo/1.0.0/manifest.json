@@ -1,0 +1,25 @@
+{
+  "$schema": "../../../schemas/manifest.schema.json",
+  "id": "com.linplayer.sandbox-demo",
+  "version": "1.0.0",
+  "apiVersion": 2,
+  "name": "沙箱界面示例",
+  "description": "声明式界面画不出来的东西，用自带网页画。演示 iframe 逃生舱：插件自己的 HTML/CSS/JS，跑在隔离沙箱里。",
+  "author": "LinPlayer",
+  "category": "ui",
+  "targets": ["pc"],
+  "icon": "icon.svg",
+  "license": "MIT",
+  "tags": ["示例", "沙箱", "iframe", "自定义界面"],
+  "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository",
+  "permissions": ["sandbox"],
+  "contributes": {
+    "sandboxViews": [
+      {
+        "id": "chart",
+        "title": "自绘图表",
+        "entry": "view/index.html"
+      }
+    ]
+  }
+}

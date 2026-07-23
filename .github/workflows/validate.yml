@@ -13,6 +13,42 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - name: Validate manifests and registry
+
+      # 先证明校验器自己是活的。
+      # 一个只会说 OK 的校验器和没有校验器是一回事 —— 自检会往一份干净的 manifest 里
+      # 逐条注入真实的坏值，任何一条注入没让它变红就直接失败。
+      - name: 校验器自检
+        run: python tools/validate_repo.py --selftest
+
+      - name: 校验插件与索引
         run: python tools/validate_repo.py
 
+      # 产物必须是当前源码的产物。registry.json 和 packages/*.ipk 都在版本库里，
+      # 改完插件忘了跑 build.py 的话，市场拿到的还是旧包 —— 而且一切看起来都正常。
+      #
+      # .ipk 是可复现打包（时间戳/顺序/权限位全钉死），所以重打一遍应该逐字节一致。
+      - name: 检查已提交的产物与源码一致
+        run: |
+          python tools/build.py
+          git diff --exit-code -- registry.json packages/ \
+            || { echo "::error::registry.json 或 packages/ 与 plugins/ 不一致，请跑 python tools/build.py 后重新提交"; exit 1; }
+
+  pages:
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      # 整个仓库就是站点：index.html 直接读同目录的 registry.json，没有构建步骤。
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deploy
+        uses: actions/deploy-pages@v4

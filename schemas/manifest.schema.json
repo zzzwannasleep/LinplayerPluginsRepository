@@ -1,62 +1,58 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://linplayer.dev/schemas/manifest.schema.json",
-  "title": "LinPlayer Plugin Manifest",
-  "description": "manifest.json 的格式，与 App 内置插件加载器（lib/plugins）一致。",
+  "$id": "https://zzzwannasleep.github.io/LinplayerPluginsRepository/schemas/manifest.schema.json",
+  "title": "LinPlayer 插件清单 (apiVersion 2)",
+  "description": "编辑器补全用。真正的校验闸门是 tools/validate_repo.py（带自检），规则源头是宿主 crates/core/src/plugins/manifest.rs。",
   "type": "object",
-  "additionalProperties": false,
-  "required": ["id", "version", "name", "description", "permissions"],
+  "required": ["id", "version", "apiVersion", "name", "description"],
   "properties": {
     "id": {
       "type": "string",
-      "description": "反向域名唯一标识，至少包含一个点。",
       "pattern": "^[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)+$",
-      "maxLength": 200
+      "description": "反向域名，如 com.example.myplugin。必须和目录名一致。"
     },
     "version": {
       "type": "string",
-      "description": "语义化版本 major.minor.patch。",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$",
+      "description": "语义化版本 x.y.z。必须和版本目录名一致。"
     },
-    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
-    "author": { "type": "string", "maxLength": 80 },
-    "description": { "type": "string", "minLength": 1, "maxLength": 300 },
-    "main": {
+    "apiVersion": {
+      "const": 2,
+      "description": "插件 API 版本。必须是 2 —— 缺省会被宿主视为 v1 并拒绝安装。"
+    },
+    "name": { "type": "string", "minLength": 1, "description": "展示名称。" },
+    "description": {
       "type": "string",
-      "description": "入口 JS 文件名，默认 main.js。",
-      "maxLength": 200
+      "minLength": 1,
+      "description": "一句话说明这个插件干什么。市场卡片直接显示。"
     },
-    "icon": { "type": "string", "maxLength": 200 },
-    "homepage": { "type": "string", "maxLength": 300 },
-    "minAppVersion": {
+    "author": {
       "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+      "description": "作者名。必须是字符串 —— v1 的 {\"name\": …} 对象形式会让宿主整条跳过。"
     },
-    "tags": {
-      "type": "array",
-      "items": { "type": "string", "maxLength": 30 },
-      "maxItems": 30,
-      "uniqueItems": true
+    "category": {
+      "enum": ["source", "ui", "player", "notify", "tools"],
+      "description": "市场分类。缺省 tools。"
     },
     "targets": {
       "type": "array",
-      "description": "市场筛选用：该插件适配的端。注意：ios 端受 App Store 政策限制，不能执行下载来的 main.js，iOS 专用插件须为数据驱动/声明式形态（非可执行 JS）。",
-      "items": { "type": "string", "enum": ["tv", "mobile", "pc", "ios"] },
-      "uniqueItems": true
+      "items": { "enum": ["pc", "mobile", "tv"] },
+      "description": "适配端。空或省略 = 不限。（没有 ios，苹果全线不做。）"
     },
-    "channel": { "type": "string", "enum": ["stable", "beta", "dev"] },
-    "apiVersion": { "type": "integer", "minimum": 1 },
-    "minHostVersion": {
+    "main": { "type": "string", "default": "main.js", "description": "入口 JS，相对插件目录。" },
+    "icon": {
       "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+      "description": "图标文件名（svg/png，≤64KB）。构建时会内联进 registry.json。"
     },
-    "license": { "type": "string", "maxLength": 80 },
+    "homepage": { "type": "string" },
+    "license": { "type": "string" },
+    "minAppVersion": { "type": "string", "description": "要求的最低 LinPlayer 版本。" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+
     "permissions": {
       "type": "array",
-      "description": "申请的能力，启用前需用户同意。",
-      "uniqueItems": true,
+      "description": "声明所需能力。用户在启用前会看到逐条人话说明。log 隐式授予、无需声明。",
       "items": {
-        "type": "string",
         "enum": [
           "player.read",
           "player.control",
@@ -65,212 +61,122 @@
           "ui",
           "emby.read",
           "emby.api",
-          "emby.credentials",
+          "sources",
           "extensions",
-          "cfproxy",
+          "sandbox",
           "log"
         ]
       }
     },
+
     "httpAllowedHosts": {
       "type": "array",
-      "description": "HTTPS 域名白名单，fail-closed（空/缺省=拒绝所有出网，不是放行）。支持 *.example.com 子域通配（不覆盖主域本身）。",
-      "items": { "type": "string", "minLength": 1, "maxLength": 255 },
-      "maxItems": 200
+      "description": "出网白名单。空 = 拒绝一切出网（fail-closed）。支持 *.example.com 子域通配；裸 * 无效。特殊令牌 $sourceServer 展开成用户在「添加服务器」亲手填的地址，也是唯一允许明文 http 的路径。",
+      "items": { "type": "string" }
     },
-    "extends": {
+
+    "contributes": {
       "type": "object",
-      "description": "静态声明的扩展点。",
+      "description": "把能力挂到宿主的预定义位置。每一类都要求声明对应权限。",
       "additionalProperties": false,
       "properties": {
-        "sidebarItems": { "$ref": "#/$defs/extList" },
-        "mediaSources": { "$ref": "#/$defs/extList" },
-        "actions": { "$ref": "#/$defs/extList" },
-        "eventListeners": { "$ref": "#/$defs/extList" },
-        "settingsPages": { "$ref": "#/$defs/extList" },
-        "playerOverlays": { "$ref": "#/$defs/extList" },
-        "contextMenus": { "$ref": "#/$defs/extList" },
-        "homeStats": { "$ref": "#/$defs/extList" }
-      }
-    },
-    "runtime": {
-      "type": "string",
-      "description": "插件运行时形态。js=可执行 JS(main.js，默认，桌面/安卓/TV)；data=声明式数据驱动(App 内置解释器执行，iOS 合规)；addon=远程 addon 服务(App 按协议收发 JSON，iOS 合规)。凡 targets 含 ios 必须为 data 或 addon。",
-      "enum": ["js", "data", "addon"],
-      "default": "js"
-    },
-    "data": {
-      "type": "object",
-      "description": "runtime=data 时的声明式规则(无可执行代码)。模板插值支持 {serverUrl} {cfg.KEY} {media.FIELD}；path 为响应 JSON 的点路径。",
-      "additionalProperties": false,
-      "properties": {
-        "settings": {
-          "type": "array",
-          "description": "用户可填配置，值以 {cfg.KEY} 引用。",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["key", "label"],
-            "properties": {
-              "key": { "type": "string", "maxLength": 60 },
-              "label": { "type": "string", "maxLength": 80 },
-              "type": { "type": "string", "enum": ["text", "password", "number", "switch"] },
-              "default": {},
-              "hint": { "type": "string", "maxLength": 200 }
-            }
-          }
+        "dataSources": {
+          "description": "贡献一个完整数据源（需 sources 权限）。运行时用 ctx.sources.register 补上三个回调。",
+          "type": ["array", "object"],
+          "items": { "$ref": "#/$defs/dataSource" }
         },
-        "homeStats": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["metrics"],
-          "description": "单请求(request)或多步(steps)取数后渲染指标。多步可 capture 响应字段为变量供后续步骤/指标使用。",
-          "properties": {
-            "when": { "$ref": "#/$defs/whenGate" },
-            "request": { "$ref": "#/$defs/dataRequest" },
-            "steps": {
-              "type": "array",
-              "description": "多步请求(如先登录换 token 再拉数据)，按序执行。",
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": ["request"],
-                "properties": {
-                  "request": { "$ref": "#/$defs/dataRequest" },
-                  "capture": {
-                    "type": "object",
-                    "description": "把本步响应字段(点路径)捕获为变量，供后续 step/指标以 {名} 引用。",
-                    "additionalProperties": { "type": "string" }
-                  }
-                }
-              }
-            },
-            "metrics": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": ["label"],
-                "properties": {
-                  "label": { "type": "string", "maxLength": 80 },
-                  "path": { "type": "string", "maxLength": 200 },
-                  "suffix": { "type": "string", "maxLength": 20 },
-                  "value": { "$ref": "#/$defs/valueSpec" }
-                }
-              }
-            }
-          }
+        "panels": {
+          "description": "贡献一块界面，挂在 slot 指定的位置（需 extensions 权限）。",
+          "type": ["array", "object"],
+          "items": { "$ref": "#/$defs/panel" }
         },
-        "onEvent": {
-          "type": "array",
-          "description": "播放事件触发的请求(如播完发通知)。",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["event", "request"],
-            "properties": {
-              "event": { "type": "string", "enum": ["onPlay", "onPause", "onPlayEnd"] },
-              "request": { "$ref": "#/$defs/dataRequest" }
-            }
-          }
+        "actions": {
+          "description": "贡献一个操作项（需 extensions 权限）。",
+          "type": ["array", "object"],
+          "items": { "$ref": "#/$defs/action" }
         },
-        "mediaSource": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "title": { "type": "string", "maxLength": 80 },
-            "catalog": { "$ref": "#/$defs/dataList" },
-            "search": { "$ref": "#/$defs/dataList" }
-          }
-        }
-      }
-    },
-    "addon": {
-      "type": "object",
-      "description": "runtime=addon 时的远程服务描述。App 请求 {baseUrl}/manifest.json 与各 resource 端点，逻辑在服务端执行。",
-      "additionalProperties": false,
-      "required": ["baseUrl"],
-      "properties": {
-        "baseUrl": { "type": "string", "pattern": "^https://", "maxLength": 300 },
-        "resources": {
-          "type": "array",
-          "items": { "type": "string", "enum": ["catalog", "meta", "stream", "homeStats"] },
-          "uniqueItems": true
+        "sandboxViews": {
+          "description": "贡献一个 iframe 逃生舱视图（需 sandbox 权限）。",
+          "type": ["array", "object"],
+          "items": { "$ref": "#/$defs/sandboxView" }
         }
       }
     }
   },
+
+  "not": {
+    "anyOf": [
+      { "required": ["extends"] },
+      { "required": ["runtime"] },
+      { "required": ["data"] },
+      { "required": ["addon"] },
+      { "required": ["channel"] },
+      { "required": ["minHostVersion"] }
+    ]
+  },
+
   "$defs": {
-    "whenGate": {
+    "dataSource": {
       "type": "object",
-      "description": "触发门槛，全部满足才生效。",
-      "additionalProperties": false,
+      "required": ["id"],
       "properties": {
-        "serverUrlIncludes": { "type": "string", "maxLength": 200 }
-      }
-    },
-    "dataRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["url"],
-      "properties": {
-        "method": { "type": "string", "enum": ["GET", "POST"] },
-        "url": { "type": "string", "maxLength": 500, "description": "HTTPS，支持模板插值" },
-        "auth": { "type": "string", "enum": ["none", "emby"], "description": "emby=以当前登录身份注入 Emby 鉴权" },
-        "headers": { "type": "object", "additionalProperties": { "type": "string" } },
-        "query": { "type": "object", "additionalProperties": { "type": "string" } },
-        "json": { "description": "POST 的 JSON 体(值支持模板插值)" }
-      }
-    },
-    "dataList": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["request", "list", "map"],
-      "properties": {
-        "request": { "$ref": "#/$defs/dataRequest" },
-        "list": { "type": "string", "maxLength": 200, "description": "响应中列表所在的点路径" },
-        "map": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "description": "展示名。「添加服务器」页上显示的就是它。" },
+        "auth": {
           "type": "object",
-          "description": "列表项字段映射：目标字段 -> 源点路径",
-          "additionalProperties": { "type": "string" }
-        }
-      }
-    },
-    "valueSpec": {
-      "description": "声明式指标取值：字符串=模板插值；对象=取一个数(var/subtract/add/path)再变换(divide/multiply/round/prefix/suffix)。非公式解析器，仍属配置。",
-      "oneOf": [
-        { "type": "string" },
-        {
-          "type": "object",
-          "additionalProperties": false,
+          "description": "登录表单。宿主按这个描述渲染，插件不用自己画。",
+          "required": ["fields"],
           "properties": {
-            "var": { "type": "string", "description": "变量名（cfg./捕获变量等）" },
-            "subtract": { "type": "array", "items": { "type": "string" }, "minItems": 2, "maxItems": 2 },
-            "add": { "type": "array", "items": { "type": "string" }, "minItems": 2, "maxItems": 2 },
-            "path": { "type": "string", "description": "对最后一次响应体取点路径" },
-            "divide": { "type": "number" },
-            "multiply": { "type": "number" },
-            "round": { "type": "integer", "minimum": 0, "maximum": 10 },
-            "prefix": { "type": "string", "maxLength": 20 },
-            "suffix": { "type": "string", "maxLength": 20 }
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "label": { "type": "string" },
+                  "type": { "enum": ["text", "password", "url", "number"] },
+                  "required": { "type": "boolean" },
+                  "placeholder": { "type": "string" }
+                }
+              }
+            }
           }
         }
-      ]
+      }
     },
-    "extList": {
-      "type": "array",
-      "maxItems": 100,
-      "items": {
-        "type": "object",
-        "description": "扩展点描述，字段随类型而定（常见：id/title/icon/handler/route）。",
-        "properties": {
-          "id": { "type": "string", "maxLength": 80 },
-          "title": { "type": "string", "maxLength": 80 },
-          "icon": { "type": "string", "maxLength": 200 },
-          "handler": { "type": "string", "maxLength": 120 },
-          "route": { "type": "string", "maxLength": 200 }
-        },
-        "additionalProperties": true
+    "panel": {
+      "type": "object",
+      "required": ["id", "slot"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "slot": { "enum": ["home.stats", "sidebar", "settings", "player.overlay", "page"] },
+        "handler": { "type": "string", "description": "全局函数名，返回一棵声明式 UI 描述树。" },
+        "icon": { "type": "string" }
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "context": { "enum": ["global", "item", "player"], "default": "global" },
+        "handler": { "type": "string" }
+      }
+    },
+    "sandboxView": {
+      "type": "object",
+      "required": ["id", "entry"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "entry": {
+          "type": "string",
+          "minLength": 1,
+          "description": "插件目录内的 html 相对路径。不许 .. 或绝对路径。"
+        }
       }
     }
   }

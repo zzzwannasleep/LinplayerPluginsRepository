@@ -1,324 +1,416 @@
-# LinPlayer 插件规范 V1
+# LinPlayer 插件规范 v2
 
-LinPlayer 插件是运行在 **QuickJS** 里的 JavaScript。每个插件跑在**独立 isolate**，
-通过受权限控制的全局 `ctx` 与宿主交互，并可向预定义**扩展点**挂载功能。
+`apiVersion: 2`。**和 v1 不兼容**，没有兼容层：v1 插件装不上，会明确告诉用户去拿新版。
 
-本规范与 App 内置加载器（`lib/plugins`）一致，是「照着写就能跑」的版本。
+上手请先看[开发指南](guide.html)，这里是逐项参考。
 
----
+## 插件长什么样
 
-## 1. 插件结构
-
-一个插件 = 一个目录，至少包含 `manifest.json` + 入口 `main.js`：
+一个插件是一个目录，打成 zip 后改名 `.ipk`：
 
 ```
-plugins/<id>/<version>/
-├── manifest.json     # 必需，插件清单
-├── main.js           # 必需，入口脚本
-├── README.md         # 建议
-└── icon.svg          # 可选，图标
+manifest.json      必须在包根，不能多包一层目录
+main.js            入口（manifest.main 可以改名）
+icon.svg           可选，svg 或 png，≤64KB
+README.md          可选
+view/…             可选，沙箱视图用的网页
 ```
 
-用 `python tools/build.py` 打包成 `.ipk`（zip）后由 App「设置 → 插件 → +」安装。
+宿主安装时解压到 `<数据目录>/plugins/<插件id>/`，一个插件一个版本，重装即覆盖。
 
----
+代码跑在一个受限的 JS 引擎里（QuickJS），**没有** `window`、`document`、`fetch`、
+`XMLHttpRequest`、`require`、`import`。能用的只有标准 JS 内置对象加一个全局 `ctx`。
 
-## 2. manifest.json
+## manifest.json
 
-```json
-{
-  "id": "com.example.foo",          // 必需，反向域名，唯一，至少一个点
-  "version": "1.0.0",               // 必需，语义化版本
-  "name": "示例插件",                // 必需
-  "description": "一句话说明",        // 必需
-  "author": "你的名字",              // 可选（字符串）
-  "main": "main.js",                // 可选，入口，默认 main.js
-  "icon": "icon.svg",               // 可选
-  "homepage": "https://...",        // 可选
-  "minAppVersion": "1.0.0",         // 可选
-  "permissions": ["http", "storage"],          // 必需，申请的能力
-  "httpAllowedHosts": ["api.example.com"],     // 可选，HTTPS 白名单
-  "extends": {                                  // 可选，静态声明扩展点
-    "settingsPages": [
-      { "id": "settings", "title": "设置", "handler": "openSettings" }
-    ]
-  }
+### 必填
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `id` | string | 反向域名，至少两段，只能用字母数字和 `-` `_`。**必须和目录名一致**。 |
+| `version` | string | 语义化版本 `x.y.z`。**必须和版本目录名一致**。 |
+| `apiVersion` | number | 必须是 `2`。缺省会被当成 v1 直接拒绝。 |
+| `name` | string | 展示名。 |
+| `description` | string | 一句话说明干什么。市场卡片直接显示它。 |
+
+### 选填
+
+| 字段 | 类型 | 默认 | 说明 |
+|---|---|---|---|
+| `author` | **string** | `未知作者` | 必须是字符串。v1 的 `{"name": …}` 对象形式会让宿主**整条跳过**。 |
+| `category` | string | `tools` | `source` / `ui` / `player` / `notify` / `tools`。 |
+| `targets` | string[] | 不限 | `pc` / `mobile` / `tv`。**没有 `ios`**。 |
+| `main` | string | `main.js` | 入口 JS，相对插件目录。 |
+| `icon` | string | — | 图标文件名。构建时会内联成 data URI 进索引。 |
+| `homepage` | string | — | 主页链接。 |
+| `license` | string | — | 许可证。 |
+| `minAppVersion` | string | — | 要求的最低 LinPlayer 版本。 |
+| `tags` | string[] | `[]` | 搜索用的标签。 |
+| `permissions` | string[] | `[]` | 见下。 |
+| `httpAllowedHosts` | string[] | `[]` | 见下。**空 = 完全不能出网**。 |
+| `contributes` | object | `{}` | 见下。 |
+
+### 撞上就整包被拒的字段
+
+| 字段 | 为什么没了 |
+|---|---|
+| `runtime` | v1 的 `data` / `addon` 是 iOS 上架合规专用，苹果全线已经不做。 |
+| `extends` | 八个平级扩展点改成了四类 × slot，见 `contributes`。 |
+| `data` / `addon` | 同 `runtime`。 |
+| `channel` | 不再有 stable/beta 通道。 |
+| `minHostVersion` | 改名为 `minAppVersion`。 |
+
+## 权限
+
+在 `permissions` 里声明，用户在**启用前**会逐条看到人话说明。没声明就调对应的
+`ctx.*`，直接抛异常。`log` 隐式授予，不用写。
+
+| id | 用户看到的 | 敏感 |
+|---|---|:--:|
+| `player.read` | 读取播放状态 | |
+| `player.control` | 控制播放器 | ⚠ |
+| `http` | 网络访问 | ⚠ |
+| `storage` | 本地存储 | |
+| `ui` | 界面交互 | |
+| `emby.read` | 读取 Emby 信息 | |
+| `emby.api` | 调用 Emby 接口 | ⚠ |
+| `sources` | 提供数据源 | ⚠ |
+| `extensions` | 扩展界面 | |
+| `sandbox` | 自定义界面 | ⚠ |
+
+### 已删除
+
+| id | 替代做法 |
+|---|---|
+| `emby.credentials` | 宿主不再持久化明文密码。插件要账密就自己弹表单，存进自己的 `ctx.storage`（每插件隔离）。 |
+| `cfproxy` | CF 优选反代已改为应用内置功能。 |
+
+## 出网白名单
+
+`httpAllowedHosts` 是 **fail-closed** 的：空数组或不写 = 拒绝一切出网，不是放行。
+
+| 写法 | 含义 |
+|---|---|
+| `api.example.com` | 精确匹配这个主机。 |
+| `*.example.com` | 子域通配。**不覆盖主域本身**。 |
+| `*` | **无效**。它谁都匹配不上（能匹配上就等于一个字符击穿整道边界）。 |
+| `$sourceServer` | 运行时展开成用户在「添加服务器」里亲手填的那个地址的 origin。 |
+
+`$` 开头但拼错的令牌会在装包时直接报错，不会被当成一个永远匹配不上的普通域名
+静默放过 —— 那样作者会对着「域名不在白名单内」查半天域名。
+
+**协议**：一律只允许 https。唯一例外是 `$sourceServer` —— 用户自己填的地址如果是
+`http://`，那个 origin 就放行明文（自建 OpenList / 飞牛之类绝大多数是局域网 http，
+强制 https 等于开箱即拒）。
+
+重定向后的最终地址会**再过一遍**同一道准入，所以 302 跳到白名单外主机同样会被拦。
+
+## 贡献点 contributes
+
+把能力挂到宿主的预定义位置。形如：
+
+```jsonc
+"contributes": {
+  "panels": [ { "id": "…", "slot": "…", "handler": "…" } ]
 }
 ```
 
-校验要点：`id`/`version` 必须与目录名一致；`permissions` 只能是已知权限；
-`extends` 的键只能是已知扩展点。见 `schemas/manifest.schema.json`。
+每一类都**硬绑**一个权限，没声明对应权限的话 manifest 校验直接拒（否则用户在授权
+弹窗里看不到，却被悄悄挂上了东西）：
 
----
+| 类型 | 要的权限 | 是什么 |
+|---|---|---|
+| `dataSources` | `sources` | 一个完整数据源：浏览 / 搜索 / 播放。 |
+| `panels` | `extensions` | 一块界面，挂在 `slot` 指定的位置。 |
+| `actions` | `extensions` | 一个操作项，出现在 `context` 指定的上下文。 |
+| `sandboxViews` | `sandbox` | 一个 iframe 逃生舱视图。 |
 
-## 3. 权限
+### panels
 
-启用前会弹窗让用户同意。运行时每次 `ctx.*` 调用都会做权限检查，未授权抛 JS 异常。
+| 字段 | 说明 |
+|---|---|
+| `id` | 必填，非空。 |
+| `slot` | 必填，见下表。 |
+| `title` | 显示的标题。 |
+| `handler` | 全局函数名，返回界面描述树。 |
+| 其它任意键 | 值是全局函数名，供描述树里的 `handler` 引用（按钮、列表项）。 |
 
-| 权限 | 含义 |
-|------|------|
-| `player.read` | 读播放状态、当前媒体；监听播放事件 |
-| `player.control` | 播放 / 暂停 / 跳转 |
-| `http` | HTTPS 网络访问（受 `httpAllowedHosts` 白名单约束） |
-| `storage` | 本地存储（每插件独立，上限 5MB） |
-| `ui` | Toast / 对话框 / 表单 / 打开页面 |
-| `emby.read` | 读当前用户、服务器地址/名称 |
-| `emby.api` | 以当前登录身份调用 Emby 接口 |
-| `emby.credentials` | 读添加服务器时填写的账号密码（用于登录配套网站） |
-| `cfproxy` | Cloudflare 优选 IP 测速 + 本地反代（把服务器线路改写到本地反代） |
-| `extensions` | 注册扩展点 |
-| `log` | 写日志（始终允许，无需声明） |
+| slot | 落在哪 |
+|---|---|
+| `home.stats` | 首页统计区。 |
+| `settings` | 这个插件详情页里的「设置」标签。 |
+| `sidebar` | 侧栏一个独立入口，点开是整页。 |
+| `page` | 整页。入口在插件详情页的「打开」。 |
+| `player.overlay` | 播放器叠加层。 |
 
----
+### actions
 
-## 4. ctx API
+`context` 缺省 `global`，可选 `global` / `item` / `player`。
 
-所有 `ctx.*` 调用返回 Promise（除 `ctx.log`）。
+### sandboxViews
 
-### ctx.log（始终可用）
+| 字段 | 说明 |
+|---|---|
+| `id` | 必填。 |
+| `entry` | 必填，插件目录内的 html 相对路径。不许 `..`，不许绝对路径。 |
+| `title` | 显示的标题。 |
+
+沙箱视图跑在**独立 origin 的 iframe** 里，拿不到 `ctx`，也拿不到 App 的任何接口。
+这不是限制没做完，是它被允许存在的前提：主窗口的 JS 上下文里有宿主的 invoke 通道，
+插件代码一旦同源，整套权限模型就作废了。
+
+iframe 的 sandbox 属性是 `allow-scripts allow-forms allow-popups` —— 没有
+`allow-same-origin`（给了就等于取消隔离），也没有 `allow-top-navigation`。
+
+### dataSources
+
+| 字段 | 说明 |
+|---|---|
+| `id` | 必填。数据源在宿主里的键是 `plugin:<插件id>/<这个 id>`。 |
+| `name` | 展示名。「添加服务器」页上显示它。 |
+| `auth.fields[]` | 登录表单。宿主按这个描述渲染，你不用自己画。每项要有 `id`。 |
+
+`auth.fields[].id` 有三个是宿主认得的：`base_url`（也是 `$sourceServer` 的来源）、
+`username`、`password`。其余的会打包成 JSON 塞进 `server.token` 原样透给插件。
+
+**manifest 里写描述，运行时补行为。** 两边同 id 的贡献会**合并**（运行时的键赢，
+manifest 的键填空缺），所以 `ctx.sources.register` 只交三个回调不会把 `name` 和
+`auth` 冲掉。
+
+## ctx API
+
+全局对象 `ctx`。括号里是需要的权限。
+
+### ctx.log（无需声明）
+
 ```js
-ctx.log.info(msg); ctx.log.warn(msg); ctx.log.error(msg);
+ctx.log.info(msg)  ctx.log.warn(msg)  ctx.log.error(msg)
 ```
 
-### ctx.http（需 `http`，仅 HTTPS + 白名单）
-```js
-const res = await ctx.http.get(url, { headers, query });
-const res = await ctx.http.post(url, body, { headers, query });
-// res = { status, headers, body }
-// body：响应是 JSON 时为对象/数组，否则为字符串
+### ctx.http（`http`）
 
-// discardBody：按流丢弃响应体、只统计字节数，不读进 isolate（避免大文件撑爆 64MB）。
-// 用于测速这类只关心“传了多少、多快”的下载。返回 { status, headers, bytes }。
-const res = await ctx.http.get(url, { headers, discardBody: true });
-// res = { status, headers, bytes }
+```js
+await ctx.http.get(url, opts)
+await ctx.http.post(url, body, opts)
+await ctx.http.delete(url, opts)
 ```
 
-> **白名单是 fail-closed 的**：`httpAllowedHosts` 为空/缺省 = **拒绝所有主机**（不是放行）。
-> 任何要联网的插件都必须显式列出会访问的 host，否则每次请求都抛 `域名不在白名单内`。
-> 重定向后的最终 host 也必须在白名单内。
->
-> 支持 `*.example.com` 形式的**子域通配**，用于服务端动态分配、事先枚举不全的域名
-> （如线路节点）。规则：
-> - 只匹配子域，`*.example.com` **不覆盖** `example.com` 本身 —— 主域要单独列一条；
-> - 要求点分隔，`evil-example.com` 不会命中；
-> - 只认 `*.` 开头，裸 `*` 不是通配符（否则一个字符就把 fail-closed 击穿成放行全网）。
+`opts`：`{ headers, query, body, discardBody }`。
+返回 `{ status, headers, body }`；`body` 是 JSON 就已经解析成对象，否则是字符串。
 
-### ctx.storage（需 `storage`，<=5MB）
+`discardBody: true` 时按流丢弃只统计字节数，返回 `{ status, headers, bytes }`，
+内存恒定 —— 测速、探测大小用它，别把上百 MB 读成一个字符串。
+
+> **必须自己设 `User-Agent`。** 宿主的 http 客户端默认一个头都不发，
+> 很多站（尤其挂 CF 的）会直接 403，而报错看起来像是鉴权失败。
+
+### ctx.storage（`storage`）
+
 ```js
-await ctx.storage.get(key);      // 任意 JSON 值或 undefined
-await ctx.storage.set(key, val);
-await ctx.storage.delete(key);
-await ctx.storage.keys();        // string[]
-await ctx.storage.clear();
+await ctx.storage.get(key)      await ctx.storage.set(key, value)
+await ctx.storage.delete(key)   await ctx.storage.keys()
 ```
 
-### ctx.player（getCurrentMedia 需 `player.read`；play/pause/seek 需 `player.control`）
+每个插件独立，别的插件读不到。上限 5MB。
+
+### ctx.ui（`ui`）
+
 ```js
-const media = await ctx.player.getCurrentMedia();
-// { id, name, type, seriesName, indexNumber, parentIndexNumber, overview, ... }
-await ctx.player.getCacheLimitBytes(); // 需 player.read -> 用户设置的视频缓存上限(字节)
-await ctx.player.play();
-await ctx.player.pause();
-await ctx.player.seek(seconds);
-ctx.player.on('onPlayEnd', fn);   // 事件：onPlay / onPause / onPlayEnd
-ctx.player.off('onPlayEnd', fn);
+ctx.ui.showToast(text)
+await ctx.ui.showDialog({ title, message, confirmLabel, cancelLabel })  // -> true/false/null
+await ctx.ui.showForm({ title, description, fields, submitLabel })      // -> {id: value} / null
+await ctx.ui.showList({ title, items })                                 // -> 选中项的 id / null
+await ctx.ui.showProgress({ title });  ctx.ui.updateProgress({ value }); ctx.ui.closeProgress()
+ctx.ui.render(viewId, tree)     // 主动把新树推给某块面板
 ```
 
-### ctx.ui（需 `ui`）
+`showForm` 的 `fields[]`：`{ id, label, type, value, placeholder, options }`。
+`type` 可以是 `text` / `password` / `textarea` / `select` / `switch`。
+
+> 键是 **`id`** 和 **`value`**，不是 `key` / `default`。没有 `id` 的控件会被整个
+> 丢掉，表现是表单一片空白且没有任何报错。
+
+用户取消或直接关窗时返回 `null`，一定要判。
+
+`ctx.ui.openPage` 目前不支持，会提示用户。
+
+### ctx.player（`player.read` / `player.control`）
+
 ```js
-ctx.ui.showToast(message);
-const buttonId = await ctx.ui.showDialog({ title, message, buttons: [{ id, label }] });
-const values = await ctx.ui.showForm({
-  title,
-  fields: [
-    { key, label, type: 'text'|'password'|'number'|'switch', default, hint },
-    // select：下拉选择，options 每项 { value, label }，返回选中项的 value
-    { key, label, type: 'select', options: [{ value, label }], default, hint }
-  ],
-  submitLabel, cancelLabel
-}); // 返回 { key: value } 或 null（取消）
-await ctx.ui.openPage(pageId, params);
-
-// 进度面板：可实时更新的模态框，用于测速/下载这类过程可视化。
-const id = await ctx.ui.showProgress({ title, message, percent }); // percent 0-100，缺省=不定态
-await ctx.ui.updateProgress(id, { message, percent });
-await ctx.ui.closeProgress(id);
-
-// 列表选择器：可滚动、每项可带缩略图（如 TMDB 海报），返回被点条目的 id（或 null）。
-const id = await ctx.ui.showList({
-  title,
-  items: [{ id, title, subtitle, image }], // image=图片URL，由宿主加载
-  cancelLabel
-});
+await ctx.player.getCurrentMedia()      // player.read
+await ctx.player.getCacheLimitBytes()   // player.read
+ctx.player.on(event, fn)                // player.read
+ctx.player.off(event)
+await ctx.player.play() / pause() / seek(secs)   // player.control
 ```
 
-> **关于 30s 超时**：宿主用「空转看门狗」判定失控——插件**等待用户填表 / 网络请求期间不计时**，
-> 只有长时间既无宿主交互又不返回（纯 JS 死循环）才会被判超时。因此交互式多步流程（搜索→选择→提交）
-> 想花多久都行，不会被误杀。
+事件：`onPlay`、`onPlayEnd`。
 
-### ctx.emby
+> `off(event)` 是按事件整体清空的，不做函数身份匹配。
+
+### ctx.emby（`emby.read` / `emby.api`）
+
 ```js
-await ctx.emby.getServerUrl();    // 需 emby.read
-await ctx.emby.getServerInfo();   // 需 emby.read -> { url, baseUrl, name, username, userId }
-await ctx.emby.getCurrentUser();  // 需 emby.read -> { id, name }
-await ctx.emby.getCredentials();  // 需 emby.credentials -> { username, password, url }
-await ctx.emby.apiRequest({ method, path, query, body, headers, discardBody });
-// 需 emby.api -> { status, body }
-//   headers     可选，自定义请求头（如 Range，用于分段预热当前流；token 仍自动注入）
-//   discardBody 可选，true 时按流丢弃响应体、不读进 isolate，返回 { status, bytes }
-//               （用于多线程预热缓存，避免大段二进制撑爆 64MB 内存）
+await ctx.emby.getServerUrl()      await ctx.emby.getServerInfo()
+await ctx.emby.getCurrentUser()    await ctx.emby.apiRequest(...)   // emby.api
 ```
 
-### ctx.cfproxy（需 `cfproxy`）
+没有 `getCredentials` —— 见「已删除的权限」。
 
-Cloudflare 优选 IP 测速 + 本地反代。重活（测速/反代/定时）都在宿主完成，插件只编排。
+### ctx.extensions（按贡献点类型各自校验权限）
 
 ```js
-await ctx.cfproxy.listServers();   // [{id,name,host,url,active,pinnedIp,latencyMs,downloadKBps,scheduleEnabled,scheduleMinutes}]
-await ctx.cfproxy.getStatus();     // { active:[{id,name,pinnedIp,latencyMs,downloadKBps,scheduleEnabled}] }
-await ctx.cfproxy.openPanel();     // 打开宿主可视化面板（推荐入口，自带实时测速进度）
-await ctx.cfproxy.speedTest(id);   // 对某服务器测速并应用最优 IP -> 最优结果或 null
-await ctx.cfproxy.disable(id);     // 关闭某服务器反代，恢复直连
-await ctx.cfproxy.setSchedule(id, true, 30); // 定时测速（分钟）
-await ctx.cfproxy.restore();       // 按持久化配置恢复（通常在 onEnable）
-await ctx.cfproxy.teardown();      // 拆除全部反代（通常在 onDisable）
+await ctx.extensions.register(kind, descriptor)   // 两个参数！descriptor 必须是带 id 的对象
+await ctx.extensions.unregister(kind, id)
 ```
 
-### ctx.extensions（需 `extensions`）
+`kind` 是 `panels` / `actions` / `sandboxViews` / `dataSources` 之一。
+
+> 参数数量写错（比如照 `ctx.sources.register` 的形状写成三个）会直接抛异常，
+> 不会静默注册出一条谁也用不上的幽灵贡献。
+
+### ctx.sources（`sources`）
+
 ```js
-const { id } = await ctx.extensions.register(type, descriptor);
-await ctx.extensions.unregister(type, id);
+await ctx.sources.register(srcId, { listDir, search, resolvePlay })
+await ctx.sources.unregister(srcId)
 ```
 
 ### 其它
+
 ```js
-await ctx.sleep(ms);   // 延时（封顶 10s），用于重试退避
-ctx.plugin;            // { id, name, version }
-ctx.onEnable(fn);      // 生命周期
-ctx.onDisable(fn);
+ctx.util.isVideoName(name)     // 用宿主那份扩展名表判断，别自己维护一份
+ctx.errors.unsupported(msg)    // throw 它表示「本源没这个能力」，UI 会退回本地过滤
+await ctx.sleep(ms)            // 封顶 10 秒
+ctx.plugin                     // 当前插件的元信息
+ctx.onEnable(fn) / ctx.onDisable(fn)
 ```
 
----
+## 数据源的三个函数
 
-## 5. 扩展点
-
-通过 manifest 的 `extends` 静态声明，或运行时 `ctx.extensions.register(type, descriptor)`。
-descriptor 里的 `handler` 是一个函数（运行时注册）或全局函数名（manifest 声明）。
-
-| 类型 | descriptor 关键字段 | handler 返回 / 作用 |
-|------|---------------------|---------------------|
-| `homeStats` | `{ id, title, handler }` | 返回 `{ metrics: [{label, value}] }`，渲染在首页媒体计数旁 |
-| `settingsPages` | `{ id, title, handler }` 或 `{ id, title, fields:[...] }` | handler 打开自定义 UI；或声明式表单由宿主渲染 |
-| `sidebarItems` | `{ id, title, icon, route?, handler? }` | 侧边栏/导航入口 |
-| `actions` | `{ id, title, icon, context, handler }` | 详情/播放器的操作按钮 |
-| `contextMenus` | `{ id, title, context, handler }` | 右键/长按菜单项 |
-| `playerOverlays` | `{ id, align, ... }` | 播放器覆盖层 |
-| `mediaSources` | `{ id, title, handler }` | 自定义媒体来源 |
-| `eventListeners` | `{ event, handler }` | 事件监听（通常直接用 `ctx.player.on`） |
-
-**平台支持**：`homeStats`/`sidebarItems`/`actions`/`settingsPages`/`eventListeners`/`mediaSources`
-三端都可注册；`playerOverlays`/`contextMenus` 在 TV 端不支持（加载时忽略并记日志）。
-当前宿主已接入渲染：桌面端 `homeStats`、各端「设置 → 插件」里的 `settingsPages`。
-
----
-
-## 5.5 iOS 插件（runtime: data / addon）
-
-iOS App Store 政策(指南 2.5.2)**禁止下载并执行会改变功能的代码**，所以上面的
-`runtime: js`(main.js 跑在 QuickJS)在 iOS 商店版**不能用**。iOS 专用插件必须是
-下面两种"不在设备上执行下载代码"的形态。仓库校验强制：**`targets` 含 `ios` 时
-`runtime` 必须为 `data` 或 `addon`**。这类插件**没有 main.js**。
-
-### A. `runtime: data` —— 声明式数据驱动（无服务器）
-
-插件 = 一份 `data` 声明，由 App 内置的、已过审的固定解释器执行；下载的是**数据不是代码**。
-模板插值：`{serverUrl}`、`{cfg.KEY}`(用户在 `settings` 填的值)、`{media.FIELD}`(当前媒体)、
-以及多步里 `capture` 的变量。响应取值用点路径 `path`（如 `data.limit_bytes`）。
-
-支持的块：
-| 块 | 作用 |
-|----|------|
-| `settings[]` | 用户可填配置，值以 `{cfg.KEY}` 引用 |
-| `homeStats` | `when` 门槛 + `request` **或** `steps[]`(多步,`capture` 捕获响应字段) + `metrics[]`，首页显示指标 |
-| `onEvent[]` | 播放事件(`onPlay/onPause/onPlayEnd`)触发一个 `request`（如播完发通知）|
-| `mediaSource` | `catalog`/`search`：`request` + `list`(列表点路径) + `map`(字段映射) |
-
-`request`：`{ method, url(HTTPS,可模板), auth: none|emby, headers, query, json }`。
-`steps[]`：`[{ request, capture:{变量名: 响应点路径} }, ...]` 按序执行，后一步可用前一步捕获的 `{变量}`。
-`metrics[].value`：声明式变换 `{ var|subtract|add|path, divide, multiply, round, suffix }`（非公式解析器，仍是配置）。
-
-示例：
-- `plugins/com.linplayer.telegram-notify-ios/`（onPlayEnd → 发 Telegram）
-- `plugins/com.linplayer.uhdnow-traffic-ios/`（**多步**：登录换 token → 拉流量 → 算剩余，纯 data，无服务器）
-
-**能力边界**：data 已能表达"多步请求 + 捕获 + 简单计算"，绝大多数"取数/展示/通知/源解析"够用。
-真正需要 addon 的只剩**只能在服务端做**的：藏一个不能进客户端的秘密 API key、服务端聚合/抓取多源、重计算。**普通的"用用户账密登录后取数"应留在 data（如 uhdnow-traffic-ios），不必上服务器。**
-
-### B. `runtime: addon` —— 远程 addon 服务（Stremio/Forward 模型）
-
-插件逻辑跑在**远程 HTTP 服务**上（服务端可复用你现有的 JS），App 只按固定协议收发 JSON。
-设备上没有下载/执行任何代码，App Store 合规。manifest 只声明：
-
-```json
-"runtime": "addon",
-"addon": { "baseUrl": "https://your-addon.example.com", "resources": ["homeStats","catalog","meta","stream"] }
-```
-
-App 调用协议（v1）：
-```
-GET  {baseUrl}/manifest.json          -> { id, name, resources: [...] }
-GET  {baseUrl}/homeStats?serverUrl=.. -> { metrics: [ { label, value } ] }
-GET  {baseUrl}/catalog?query=..       -> { items:   [ { id, title, poster? } ] }
-GET  {baseUrl}/meta?id=..             -> { item:    { id, title, overview?, ... } }
-GET  {baseUrl}/stream?id=..           -> { streams: [ { url, title?, headers? } ] }
-```
-逻辑全在服务端；你负责托管。当前仓库无内置 addon 示例（uhdnow 流量这类"账密登录取数"
-已用 data 在设备上完成，见上）。addon 机制保留，供真正只能服务端做的插件使用。
-
-> 选型：**默认用 A（data）**——零服务器、离线可用、够表达多步+计算。仅当逻辑必须藏在服务端
-> （秘密 key / 服务端聚合抓取 / 重计算）才用 B（addon）。
-
----
-
-## 6. 生命周期
-
-`main.js` 顶层代码在加载时执行（可在此 `ctx.player.on`、`ctx.extensions.register`）。
-另可注册：
 ```js
-ctx.onEnable(async () => { /* 启用后 */ });
-ctx.onDisable(() => { /* 禁用前 */ });
+async listDir(dirId, server)                 // dirId 为 null = 根目录
+async search(query, server)
+async resolvePlay(entry, qualityId, server)
 ```
 
----
+`server` = `{ id, baseUrl, username, password, token, extra }`。这是一份显式白名单，
+不是把宿主的内部结构整包丢过来。
 
-## 7. 安全与限制
+**条目**（`listDir` / `search` 返回的数组元素）：
 
-- **隔离**：每插件一个 QuickJS isolate，内存上限 64MB；崩溃/死循环只影响自己，不拖垮 App。
-- **超时**：单次进入 JS 的墙钟上限 30s，超时视为失控并自动禁用插件。
-- **网络**：默认仅 HTTPS；`httpAllowedHosts` 非空时进一步限制 host。
-- **无文件系统**：不暴露 fs，禁止 `import` 外部模块。
-- **存储**：每插件独立，上限 5MB。
+| 字段 | 说明 |
+|---|---|
+| `id` | 必填。缺 `id` 的单条会被跳过，不会炸掉整页。 |
+| `name` | 显示名，不填用 `id`。 |
+| `isDir` | 是不是目录。 |
+| `isVideo` | 不填就按宿主的扩展名表自动判。**没有扩展名的直链必须显式写 `true`**，否则不给播。 |
+| `size` / `thumb` | 大小、缩略图。 |
+| `raw` | 你自己的任意数据，会原样带回 `resolvePlay`。 |
 
----
+**`resolvePlay` 的返回**：
 
-## 8. 打包与安装
+| 字段 | 说明 |
+|---|---|
+| `url` | **必填**。没有它直接报错（放过去的话表现是「点了没反应」，比报错难查）。 |
+| `title` | 不填用条目名。 |
+| `httpHeaders` / `userAgent` | 逐流的请求头。 |
+| `subtitles[]` | `{ url, title, language, httpHeaders }`。 |
+| `qualities[]` / `quality` | `{ id, label, rank }` 和当前选中的 id。 |
 
-`.ipk` 就是包含 `manifest.json` + `main.js`(+图标) 的 zip：
+整体不是数组会报错；`search` 返回 `null` 等同于「不支持」。
 
-```bash
-python tools/build.py     # 一键：校验 + 生成 registry + 打包所有插件
-# 产物 packages/<id>-<version>.ipk
-# 单个打包：python tools/pack_plugin.py plugins/<id>/<version>/
+## 界面描述树
+
+插件不写 HTML，交一棵 JSON 树，宿主用自己的组件画。
+
+**上限**：树深 12 层、总节点 400 个、每层子节点 100 个。超了**截断**，不报错。
+
+| `t` | 字段 |
+|---|---|
+| `text` | `text`，`variant`: `title`/`body`/`hint`/`mono` |
+| `row` | `children[]`，`wrap` |
+| `col` | `children[]` |
+| `divider` | — |
+| `badge` | `text`，`tone`: `info`/`good`/`warn`/`danger` |
+| `stat` | `label`、`value`、`hint` |
+| `progress` | `value`（0~1 的小数，不是百分数）、`label` |
+| `image` | **`src`**、`alt`、`height` |
+| `link` | `text`、**`url`** |
+| `button` | `label`、`handler`、`variant`: `primary`/`normal`/`danger` |
+| `input` | **`id`**、`label`、`placeholder`、`value`、`password`、`multiline` |
+| `select` | **`id`**、`label`、`value`、`options[{value,label}]` |
+| `switch` | **`id`**、`label`、`value` |
+| `list` | `items[{id,title,subtitle,handler}]` |
+
+**URL 协议白名单**：图片只认 `https://`、`data:image/`、`lpplugin://`；
+链接只认 `https://`、`http://`。别的一律丢掉。
+
+`lpplugin://<插件id>/<路径>` 指插件目录里的文件。
+
+**handler 怎么解析**：描述树里 `handler: "save"` 会去找**这条贡献点描述上**名为
+`save` 的字段，取到的字符串当全局函数名调用。所以 manifest 声明的面板要用额外
+handler，得在那条 panel 上登记：
+
+```jsonc
+{ "id": "cfg", "slot": "settings", "handler": "render", "save": "onSave" }
 ```
 
-安装：App「设置 → 插件 → +」选择 `.ipk`（兼容旧 `.lpk`）→ 同意权限 → 启用。
+按钮被点时，宿主把界面上所有输入控件的当前值打成一个对象传进去，键就是控件的 `id`；
+列表项还会额外带一个 `itemId`。
 
----
+返回 `null` 的话宿主会自己重新调一次 `handler` 刷新界面 —— 大多数 handler 只是干件事，
+不必手工拼一棵完整的树回来。
 
-## 9. 示例
+**返回一个渲染器不认识的形状**（比如 v1 的 `{metrics:[…]}`，没有 `t` 字段）时，
+界面上会直接说「这个插件返回的界面描述看不懂」，而不是画一片空白。
 
-- `plugins/com.linplayer.hello/1.0.0/` —— 最小教程，照抄起步
-- `plugins/com.linplayer.telegram-notify/1.0.0/` —— 监听 onPlayEnd + http + 设置表单
-- `plugins/com.linplayer.uhdnow-traffic/1.0.0/` —— emby 检测 + 账密登录 + homeStats
+## 索引 registry.json
 
-只看一个就看 `com.linplayer.hello`。
+由 `tools/build.py` 从各插件的 manifest 生成，**不要手写**。
+
+```jsonc
+{
+  "schemaVersion": 2,
+  "plugins": [{
+    "id", "name", "description",
+    "author",        // 字符串
+    "category", "tags": [], "targets": [],
+    "permissions": [],   // 摘要上移到索引：市场不下载包就能把权限列给用户看
+    "contributes": {},
+    "icon": "data:image/svg+xml;base64,…",   // 构建期内联，零额外请求、永不碎图
+    "versions": [{
+      "version", "api_version", "min_app_version",
+      "package_url", "sha256", "changelog"
+    }]
+  }]
+}
+```
+
+> **版本条目的键是 snake_case。** 写成 `packageUrl` 这种驼峰会被反序列化**静默忽略**，
+> 后果是整条插件被跳过、市场里干脆看不到它，而两边都不报错。
+
+宿主自己按版本号取最大，**不信数组顺序**。
+
+`schemaVersion` 和 `updatedAt` 宿主不读。索引里也**没有**发布时间字段 ——
+详见 `tools/build.py` 里的说明。
+
+## 分发与完整性
+
+registry.json 和 .ipk 都走 **GitHub raw**。不要「优化」到 Cloudflare：
+国内有地方会阻断 CF，GitHub 反而更稳。
+
+包只做 **sha256 校验和**，不做代码签名。校验和保证你拿到的和仓库里的是同一份，
+**不代表内容被审计过**。
+
+打包是可复现的（时间戳、顺序、权限位全部钉死），所以同样的源码永远算出同样的哈希。
+
+## 目前的限制
+
+诚实起见列在这里：
+
+- 插件**只在电脑端可用**。安卓和电视端还没接插件命令，所以官方插件的 `targets`
+  都只写 `pc`。
+- `ctx.http` 没有流式进度回调，只有「整个下完」和「按流丢弃只数字节」两种。
+- 沙箱视图和 `main.js` 之间没有消息通道，要传数据只能经由 `ctx.storage` 各自读写。
+- `ctx.ui.openPage` 未实现。

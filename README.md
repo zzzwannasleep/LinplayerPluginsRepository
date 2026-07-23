@@ -1,124 +1,82 @@
 # LinPlayer 插件仓库
 
-LinPlayer 的插件市场仓库：存放插件文件、市场索引、规范文档和校验工具。
-插件是跑在 App 内 **QuickJS** 里的 JavaScript，通过受权限控制的 `ctx` 与宿主交互。
+LinPlayer 的官方插件源。市场页：<https://zzzwannasleep.github.io/LinplayerPluginsRepository/>
 
-> 想了解完整 API 看 [`SPEC.md`](SPEC.md)。想直接上手就照着
-> [`plugins/com.linplayer.hello/1.0.0/`](plugins/com.linplayer.hello/1.0.0/) 抄。
+App 里的插件市场默认订阅的就是这个仓库的 `registry.json`。
 
-## 仓库结构
+- [开发指南](GUIDE.md) —— 五分钟写出第一个插件
+- [插件规范](SPEC.md) —— `apiVersion: 2` 的完整参考
 
-```
-plugins/<id>/<version>/   插件源码，一个插件一个目录，按版本归档（manifest=唯一元数据源）
-packages/<id>-<ver>.ipk   打包好的安装包（build.py 生成，供市场直接下载）
-registry.json             市场索引（build.py 自动生成，勿手改）
-blocked.json              下架/禁用清单（kill switch，手动维护）
-schemas/                  JSON Schema（manifest / registry / blocked）
-tools/build.py            一键：校验 + 生成 registry + 打包所有 .ipk
-tools/{pack_plugin,validate_repo}.py  单步打包 / 校验
-SPEC.md                   插件规范（完整 API）
-index.html                零依赖的静态市场页（Cloudflare Pages）
-```
+## 目录
 
-## 5 分钟写一个插件
+| 路径 | 是什么 |
+|---|---|
+| `plugins/<id>/<version>/` | 插件源码。**唯一的元数据来源**。 |
+| `packages/*.ipk` | 打包产物。由脚本生成，纳入版本库供市场直接下载。 |
+| `registry.json` | 市场索引。由脚本生成，**不要手写**。 |
+| `schemas/manifest.schema.json` | 给编辑器补全用的清单 schema。 |
+| `tools/` | 校验 / 打包 / 构建。 |
+| `index.html` `guide.html` `spec.html` `assets/` | 市场网站。零构建、零依赖（除了一个 36KB 的 Markdown 渲染器）。 |
 
-一个插件至少要 `manifest.json` + `main.js`。
+## 现有插件
 
-**manifest.json**
-```json
-{
-  "id": "com.example.foo",
-  "version": "1.0.0",
-  "name": "我的插件",
-  "description": "干什么用的",
-  "permissions": ["ui", "storage", "extensions"],
-  "extends": {
-    "settingsPages": [{ "id": "settings", "title": "设置", "handler": "openSettings" }]
-  }
-}
-```
+| 插件 | 分类 | 干什么 |
+|---|---|---|
+| `com.linplayer.hello` | 工具 | 最小教学示例。想写插件从抄它开始。 |
+| `com.linplayer.ui-kit` | 界面 | 每一种界面块画一遍并贴上对应 JSON。写插件时开着照抄。 |
+| `com.linplayer.sandbox-demo` | 界面 | iframe 逃生舱：声明式界面画不出来的东西怎么办。 |
+| `com.linplayer.m3u` | 数据源 | 填一个 m3u 地址，按分组浏览频道并播放。 |
+| `com.linplayer.telegram-notify` | 通知 | 看完一集给自己的 Telegram 发条消息。 |
+| `com.linplayer.uhdnow` | 工具 | UHDNow 的流量 / 求片 / 测速三合一。 |
 
-**main.js**
-```js
-'use strict';
+## 发布流程
 
-async function homeMetric() {
-  const name = (await ctx.storage.get('name')) || 'World';
-  return { metrics: [{ label: '问候', value: 'Hello, ' + name }] };
-}
-
-async function openSettings() {
-  const v = await ctx.ui.showForm({
-    title: '设置',
-    fields: [{ key: 'name', label: '称呼', type: 'text', default: '' }]
-  });
-  if (!v) return;
-  await ctx.storage.set('name', v.name || 'World');
-  ctx.ui.showToast('已保存');
-}
-
-ctx.onEnable(async () => {
-  await ctx.extensions.register('homeStats', { id: 'hi', title: '问候', handler: homeMetric });
-});
+```bash
+# 1. 插件放进 plugins/<id>/<version>/，目录名必须和 manifest 里的 id、version 一致
+# 2. 校验 + 打包 + 更新索引
+python tools/build.py
+# 3. 提交这三样
+git add plugins packages registry.json
 ```
 
-`ctx` 提供 `log / http / storage / player / ui / emby / extensions / sleep`，
-扩展点有 `homeStats / sidebarItems / actions / settingsPages / ...`。完整见 [`SPEC.md`](SPEC.md)。
+`build.py` 会先用和 CI 同一套规则校验，不过就中止，不会产出半成品。
 
-## 开发流程
+仓库地址从 `GITHUB_REPOSITORY` 或 git remote 推导，**没有硬编码**。
+换组织或改仓库名之后重跑一次即可，不用手改脚本。
 
-只有两步：写插件 → 跑 `build.py`。`registry.json` 和安装包 `packages/*.ipk` **全自动生成，
-不用手碰**。
+```bash
+python tools/validate_repo.py            # 只校验
+python tools/validate_repo.py --selftest # 校验器自检（往干净 manifest 里注入坏值，确认它会红）
+python tools/build.py --check            # 只检查产物是不是最新的（不写文件）
+python tools/pack_plugin.py plugins/<id>/<ver>/   # 单个打包，顺便打印 sha256
+```
 
-1. 新建目录 `plugins/<id>/<version>/`（目录名要和 manifest 的 `id`/`version` 一致）。
-2. 照 `com.linplayer.hello` 写 `manifest.json` + `main.js`（可选 `icon.svg`、`README.md`）。
-   市场展示用的 `tags`/`targets`、`channel`/`apiVersion`/`minHostVersion` 直接写进
-   **manifest**（manifest 是唯一元数据源；不写则用默认值）。
-3. 构建：
-   ```bash
-   python tools/build.py
-   ```
-   它会：① 校验（目录名/入口文件一致）；② 由所有 manifest **自动生成 `registry.json`**；
-   ③ 把每个插件打包成 **`packages/<id>-<version>.ipk`**。
-4. 自测：App「设置 → 插件 → +」选 `packages/<id>-<version>.ipk` 安装，同意权限后启用。
-5. 发布：`git commit` 后推送即可——市场页会自动列出，并给出 `.ipk` 直接下载。
+## 几条不显然的规矩
 
-> `.ipk` 就是个 zip（包根含 `manifest.json` + `main.js`），等同 `.apk`/`.ipa` 的安装包形态。
-> 旧的 `.lpk` 仍兼容安装。
+**产物必须可复现。** 打包的时间戳、文件顺序、权限位全部钉死，索引里没有任何时间戳。
+同样的源码永远产出逐字节相同的 `.ipk` 和 `registry.json` —— CI 靠「重跑一遍看有没有
+diff」判断提交的产物是不是当前源码的产物。
 
-## 发布到市场（全自动）
+**索引里的版本键是 snake_case。** `package_url` 不是 `packageUrl`。写成驼峰会被 App
+静默忽略，整条插件从市场里消失而两边都不报错。`author` 同理，必须是字符串。
 
-**不再手工维护 `registry.json`**。`tools/build.py` 扫描 `plugins/*/*/manifest.json`
-自动生成它：`name`/`description`/`author`/`tags`/`targets` 取自 manifest，
-`manifestUrl`/`packageUrl` 自动拼成 raw 链接。你只管写 manifest + 跑 build。
+**图标内联进索引。** 构建时压成 data URI，所以市场页一个额外请求都不发、永远不碎图，
+也不受图床可达性影响。代价是索引变大，因此图标有 64KB 上限。
 
-- 安装包 `packages/*.ipk` 已纳入版本库，市场页每个版本都有「**下载 .ipk**」直链，
-  用户点一下就拿到安装包直接装。
-- 下架某插件/版本：写进 `blocked.json`（手动；这是唯一需要手改的索引文件）。
+**分发走 GitHub raw，不要挪到 Cloudflare。** 国内有地方会阻断 CF，GitHub 反而更稳。
 
-## 安装方式
+**只做 sha256，不做代码签名。** 校验和保证拿到的和仓库里的是同一份，不代表内容
+被审计过。
 
-- **市场下载**：网页市场每个插件/版本有「下载 .ipk」按钮，下载即安装包。
-- **本地安装**：App「设置 → 插件 → +」选 `.ipk`（兼容旧 `.lpk`/`.zip`）。
+## v1 去哪了
 
-## 示例插件
+`apiVersion: 1` 的插件在当前版本的 App 上装不上，**没有兼容层**。
+`runtime` / `extends` / `emby.credentials` / `cfproxy` 这些概念全部移除，
+理由写在 [SPEC.md](SPEC.md) 里。旧插件的源码在 git 历史里。
 
-| 插件 | 演示 |
-|------|------|
-| `com.linplayer.hello` | 最小教程：homeStats + 设置表单 |
-| `com.linplayer.telegram-notify` | 监听 onPlayEnd + ctx.http + 设置表单 |
-| `com.linplayer.uhdnow-traffic` | emby 服务器检测 + 账密自动登录 + 首页流量统计 |
+两个 iOS 专用插件也一并删除 —— 苹果全线不做了。
+`cf-proxy` 插件删除 —— CF 优选反代已经是 App 的内置功能。
 
-## 网页市场（Cloudflare Pages）
+## 授权
 
-静态站，无构建步骤。三页：`index.html`（市场，按 PC/移动/TV 三端 Tab 分类 + 搜索 +
-**下载 .ipk**）、`guide.html`（开发指南）、`spec.html`（规范阅读版）。市场自动读
-`registry.json` / `blocked.json`；安装包 `packages/*.ipk` 已在版本库里直接托管。
-UI 用 **layui** + **Animate.css**（已自托管在 `assets/vendor/`，含加载/进入动画、
-跟随系统深浅主题）；站点图标用应用图标 `assets/icons/app_icon_transparent.png`。
-部署：仓库连到 Pages，Build command 留空，输出目录 `.`。
-
-## 免责声明
-
-> 本仓库插件由社区贡献，仅供学习交流。插件可能访问第三方站点并返回不稳定结果。
-> 请在合法合规前提下使用。维护者不对插件内容及由此带来的损失负责。
+代码 MIT（见 [LICENSE](LICENSE)）。各插件访问的第三方服务遵循各自的条款。

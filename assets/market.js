@@ -1,306 +1,204 @@
 import {
   escapeHtml as esc,
   fetchJson,
-  delay,
-  parseBlocked,
-  pickBestVersion,
-  semverCompare,
+  bestVersion,
   TARGET_LABELS,
-  iconCandidates,
-  isPluginBlocked,
-  isVersionBlocked,
-  blockedReason,
+  CATEGORIES,
+  CATEGORY_LABEL,
+  matches,
 } from "./data.js";
+import { permInfo } from "./permissions.js";
 
-const registryUrl = new URL("./registry.json", location.href).toString();
-const blockedUrl = new URL("./blocked.json", location.href).toString();
-const TABS = ["pc", "mobile", "tv"];
+/* ============================================================
+   插件市场（静态页，零依赖，零构建）。
 
-const els = {
-  preloader: document.getElementById("preloader"),
-  plText: document.getElementById("plText"),
-  app: document.getElementById("app"),
-  q: document.getElementById("q"),
-  count: document.getElementById("count"),
-  updatedAt: document.getElementById("updatedAt"),
-  warn: document.getElementById("warn"),
-  gridpc: document.getElementById("grid-pc"),
-  gridmobile: document.getElementById("grid-mobile"),
-  gridtv: document.getElementById("grid-tv"),
-};
+   数据只有一个来源：同目录的 registry.json —— 它由 tools/build.py 从各插件的
+   manifest.json 生成，图标是构建期内联的 data URI，所以这一页**一个额外请求都不发**，
+   也就永远不会碎图。
 
-const state = { registry: null, blocked: null, plugins: [], q: "" };
-let layer = null;
+   刻意没做的事：
+   - 没有下载量 / 评分 / 排行。八个第一方插件，这些数字只能是编的。
+   - 不按端分页签。同一批插件被画三遍是上一版最没用的部分，改成按分类分 +
+     卡片上挂端徽章。
+   ============================================================ */
 
-// warm = 本会话已展示过加载动画（由 HTML head 脚本置位），后续只淡入、不再显示 loader。
-const WARM = document.documentElement.hasAttribute("data-warm");
+const REGISTRY_URL = new URL("./registry.json", location.href).toString();
 
-// 看门狗：若 8 秒后仍未进入（网络/异常/旧缓存等），给出可见提示与重试，避免无限转圈。
-setTimeout(() => {
-  if (els.app && els.app.classList.contains("is-hidden") && els.plText) {
-    els.plText.innerHTML =
-      '加载较慢或失败 · <a href="#" id="wd-retry" style="color:var(--brand);font-weight:700">点此重试</a>（仍不行请 Ctrl+F5 强制刷新）';
-    const r = document.getElementById("wd-retry");
-    if (r) r.onclick = (e) => { e.preventDefault(); location.reload(); };
+const state = { plugins: [], q: "", cat: "all" };
+
+const el = (id) => document.getElementById(id);
+
+// ---------------- 渲染 ----------------
+
+function badgeRow(p) {
+  const bits = [];
+  for (const t of p.targets || []) {
+    bits.push(`<span class="pill">${esc(TARGET_LABELS[t] || t)}</span>`);
   }
-}, 8000);
-
-// ---------------- init ----------------
-async function init() {
-  try {
-    const [registry, blockedRaw] = await Promise.all([
-      fetchJson(registryUrl),
-      fetchJson(blockedUrl).catch(() => null),
-      delay(WARM ? 0 : 400),
-    ]);
-    state.registry = registry;
-    state.blocked = parseBlocked(blockedRaw || {});
-    state.plugins = Array.isArray(registry?.plugins) ? registry.plugins : [];
-
-    fillHeader();
-    enterApp();
-
-    const layui = window.layui;
-    if (!layui) throw new Error("layui 未加载");
-    layui.use(["element", "layer"], function () {
-      layer = layui.layer;
-      renderAll();
-      bindSearch();
-      bindClicks();
-      openFromQuery();
-    });
-  } catch (e) {
-    showError(e);
+  const danger = (p.permissions || []).filter((x) => permInfo(x).danger);
+  if (danger.length) {
+    bits.push(`<span class="pill warn" title="${esc(danger.map((d) => permInfo(d).title).join("、"))}">
+                 ${danger.length} 项敏感权限</span>`);
+  } else if ((p.permissions || []).length) {
+    bits.push(`<span class="pill ok">权限温和</span>`);
   }
+  return bits.join("");
 }
 
-function enterApp() {
-  const pre = els.preloader;
-  if (pre && !WARM) {
-    pre.classList.add("animate__animated", "animate__fadeOut");
-    pre.addEventListener("animationend", () => (pre.style.display = "none"), { once: true });
-  }
-  els.app.classList.remove("is-hidden");
-  els.app.classList.add("animate__animated", WARM ? "animate__fadeIn" : "animate__fadeInUp");
-  if (WARM) els.app.style.setProperty("--animate-duration", "0.4s");
-}
-
-function showError(e) {
-  els.plText.innerHTML = `加载失败：${esc(e?.message || e)} · <a href="#" id="retry" style="color:var(--brand);font-weight:700">重试</a>`;
-  const r = document.getElementById("retry");
-  if (r)
-    r.onclick = (ev) => {
-      ev.preventDefault();
-      location.reload();
-    };
-}
-
-function fillHeader() {
-  els.updatedAt.textContent = state.registry?.updatedAt
-    ? new Date(state.registry.updatedAt).toLocaleString()
-    : "-";
-  const msg = state.blocked?.message;
-  if (msg) {
-    els.warn.textContent = msg;
-    els.warn.classList.remove("is-hidden");
-  }
-}
-
-// ---------------- render ----------------
-function matchSearch(p, q) {
-  if (!q) return true;
-  const hay = [p.id, p.name, p.description, p.author?.name, ...(p.tags || [])]
-    .filter(Boolean)
-    .join("\n")
-    .toLowerCase();
-  return hay.includes(q);
-}
-
-function renderAll() {
-  const q = state.q.trim().toLowerCase();
-  let matchedTotal = new Set();
-  for (const target of TABS) {
-    const list = state.plugins.filter(
-      (p) => Array.isArray(p.targets) && p.targets.includes(target) && matchSearch(p, q)
-    );
-    list.forEach((p) => matchedTotal.add(p.id));
-    const grid = els["grid" + target];
-    grid.innerHTML = list.length
-      ? list.map((p, i) => cardHtml(p, i)).join("")
-      : emptyHtml();
-    wireIcons(grid);
-  }
-  els.count.textContent = String(matchedTotal.size);
-}
-
-function iconHtml(p, best) {
-  const cands = best ? iconCandidates(p.id, best.version) : [];
-  const letter = esc((p.name || p.id || "?").trim().charAt(0).toUpperCase());
-  if (!cands.length) return `<span class="letter">${letter}</span>`;
-  return `<img alt="" loading="lazy" src="${esc(cands[0])}" data-next="${esc(cands[1] || "")}" data-letter="${letter}">`;
-}
-
-function wireIcons(grid) {
-  grid.querySelectorAll(".pcard__icon img").forEach((img) => {
-    img.onerror = () => {
-      const next = img.getAttribute("data-next");
-      if (next) {
-        img.removeAttribute("data-next");
-        img.src = next;
-        return;
-      }
-      const span = document.createElement("span");
-      span.className = "letter";
-      span.textContent = img.getAttribute("data-letter") || "?";
-      img.replaceWith(span);
-    };
-  });
-}
-
-function pillsHtml(p, blocked) {
-  const t = (p.targets || []).map((x) => `<span class="pill pill--brand">${esc(TARGET_LABELS[x] || x)}</span>`).join("");
-  const tags = (p.tags || []).slice(0, 4).map((x) => `<span class="pill">${esc(x)}</span>`).join("");
-  const b = blocked ? `<span class="pill pill--danger">已下架</span>` : "";
-  return t + tags + b;
-}
-
-function cardHtml(p, i) {
-  const best = pickBestVersion(p.versions, "stable");
-  const ver = best?.version ?? "";
-  const ch = best?.channel ?? "stable";
-  const pkg = best?.packageUrl ?? "";
-  const blocked =
-    isPluginBlocked(state.blocked, p.id) ||
-    (best ? isVersionBlocked(state.blocked, p.id, best.version) : false);
-  const author = p.author?.name ? `作者 ${esc(p.author.name)}` : "";
-  const dl =
-    pkg && !blocked
-      ? `<a class="btn btn--primary" href="${esc(pkg)}" download>下载 .ipk</a>`
-      : `<span class="btn btn--primary is-disabled">下载 .ipk</span>`;
-  const delayMs = Math.min(i, 10) * 40;
-  return `<article class="pcard animate__animated animate__fadeInUp" data-id="${esc(p.id)}" style="animation-delay:${delayMs}ms">
-    <div class="pcard__top">
-      <div class="pcard__icon">${iconHtml(p, best)}</div>
-      <div class="pcard__id-row">
-        <div class="pcard__title-row">
-          <div class="pcard__title">${esc(p.name || p.id)}</div>
-          <div class="pcard__ver">${esc(ch)} ${esc(ver)}</div>
+function cardHtml(p) {
+  const v = bestVersion(p.versions);
+  const icon = p.icon
+    ? `<img class="ic" src="${esc(p.icon)}" alt="">`
+    : `<span class="ic ph">${esc((p.name || "?").slice(0, 1))}</span>`;
+  return `
+    <article class="card" data-id="${esc(p.id)}">
+      <header>
+        ${icon}
+        <div class="meta">
+          <h3>${esc(p.name)}</h3>
+          <p class="sub">${esc(p.author || "未署名")} · v${esc(v ? v.version : "?")} ·
+             ${esc(CATEGORY_LABEL[p.category] || p.category || "工具")}</p>
         </div>
-        <div class="pcard__id">${esc(p.id)}</div>
-      </div>
-    </div>
-    <div class="pills">${pillsHtml(p, blocked)}</div>
-    <div class="pcard__desc">${esc(p.description || "")}</div>
-    <div class="pcard__meta">
-      ${author ? `<span class="pill">${author}</span>` : ""}
-      ${best ? `<span class="pill">minHost ${esc(best.minHostVersion || "-")}</span>` : ""}
-    </div>
-    <div class="pcard__actions">${dl}<button class="btn" data-detail>详情</button></div>
-  </article>`;
+      </header>
+      <p class="desc">${esc(p.description)}</p>
+      <div class="pills">${badgeRow(p)}</div>
+      <footer>
+        <button class="btn" data-detail="${esc(p.id)}">详情</button>
+        ${v ? `<a class="btn primary" href="${esc(v.package_url)}" download>下载 .ipk</a>` : ""}
+      </footer>
+    </article>`;
 }
 
-function emptyHtml() {
-  return `<div class="empty">
-    <div class="empty__eyebrow">没有匹配的插件</div>
-    <div class="empty__title">这个分类下暂时没有结果</div>
-    <div class="empty__desc">换个搜索词，或切到其它端看看。</div>
-  </div>`;
+function render() {
+  const list = state.plugins
+    .filter((p) => state.cat === "all" || p.category === state.cat)
+    .filter((p) => matches(p, state.q));
+
+  el("count").textContent = String(list.length);
+  el("grid").innerHTML = list.length
+    ? list.map(cardHtml).join("")
+    : `<p class="empty">没有匹配的插件。</p>`;
+
+  // 分类页签上挂各自的数量，空分类直接禁用 —— 点进去一片空白是最没意义的交互。
+  for (const c of CATEGORIES) {
+    const n =
+      c.id === "all"
+        ? state.plugins.length
+        : state.plugins.filter((p) => p.category === c.id).length;
+    const b = document.querySelector(`[data-cat="${c.id}"]`);
+    if (!b) continue;
+    b.querySelector(".n").textContent = n;
+    b.disabled = n === 0 && c.id !== "all";
+    b.classList.toggle("on", state.cat === c.id);
+  }
 }
 
-// ---------------- detail (layer) ----------------
+// ---------------- 详情 ----------------
+
+function permListHtml(perms) {
+  if (!perms || !perms.length) return `<p class="hint">这个插件不申请任何权限。</p>`;
+  return `<ul class="perms">${perms
+    .map((id) => {
+      const i = permInfo(id);
+      return `<li class="${i.danger ? "danger" : ""}">
+        <b>${esc(i.title)}</b><span>${esc(i.desc)}</span>
+      </li>`;
+    })
+    .join("")}</ul>`;
+}
+
+function contributesHtml(c) {
+  if (!c) return "";
+  const rows = [];
+  const n = (k) => (Array.isArray(c[k]) ? c[k].length : c[k] ? 1 : 0);
+  if (n("dataSources")) rows.push(`${n("dataSources")} 个数据源`);
+  if (n("panels")) rows.push(`${n("panels")} 块界面`);
+  if (n("actions")) rows.push(`${n("actions")} 个操作项`);
+  if (n("sandboxViews")) rows.push(`${n("sandboxViews")} 个自定义界面`);
+  return rows.length ? `<p class="hint">装上后会加入：${esc(rows.join("、"))}</p>` : "";
+}
+
 function openDetail(id) {
   const p = state.plugins.find((x) => x.id === id);
-  if (!p || !layer) return;
-  const versions = (p.versions || [])
-    .slice()
-    .sort((a, b) => semverCompare(String(b.version ?? "0.0.0"), String(a.version ?? "0.0.0")));
-  const pluginBlocked = isPluginBlocked(state.blocked, p.id);
+  if (!p) return;
+  const v = bestVersion(p.versions);
+  const dlg = el("detail");
+  el("dTitle").textContent = p.name;
+  el("dBody").innerHTML = `
+    <p class="sub mono">${esc(p.id)}</p>
+    <p>${esc(p.description)}</p>
+    ${contributesHtml(p.contributes)}
+    ${p.tags && p.tags.length ? `<div class="pills">${p.tags.map((t) => `<span class="pill">${esc(t)}</span>`).join("")}</div>` : ""}
 
-  const rows = versions
-    .map((v) => {
-      const vBlocked = pluginBlocked || isVersionBlocked(state.blocked, p.id, v.version);
-      const pkg = v.packageUrl || "";
-      const man = v.manifestUrl || "";
-      const dl =
-        pkg && !vBlocked
-          ? `<a class="btn btn--primary" href="${esc(pkg)}" download>下载 .ipk</a>`
-          : `<span class="btn btn--primary is-disabled">下载</span>`;
-      return `<tr>
-        <td>${esc(v.channel || "stable")}</td>
-        <td>${esc(v.version || "")}${vBlocked ? ' <span class="pill pill--danger">已下架</span>' : ""}</td>
-        <td>${esc(v.minHostVersion || "-")}</td>
-        <td><div class="vt-actions">${dl}<span class="link" data-copy="${esc(man)}">复制清单</span><a class="link" href="${esc(man)}" target="_blank" rel="noreferrer">打开</a></div></td>
-      </tr>`;
-    })
-    .join("");
+    <h4>启用前它会要这些权限</h4>
+    ${permListHtml(p.permissions)}
 
-  const reason = pluginBlocked ? blockedReason(state.blocked, p.id, "") : "";
-  const content = `<div class="detail">
-    <div class="detail__sub">${esc(p.id)}</div>
-    <div class="pills detail__pills">${pillsHtml(p, pluginBlocked)}</div>
-    <p class="detail__desc">${esc(p.description || "")}</p>
-    <div class="detail__h">版本</div>
-    <table class="vtable"><thead><tr><th>通道</th><th>版本</th><th>minHost</th><th>下载 / 清单</th></tr></thead><tbody>${rows}</tbody></table>
-    ${pluginBlocked ? `<div class="detail__blocked">该插件已下架。${reason ? "原因：" + esc(reason) : ""}</div>` : ""}
-  </div>`;
+    <h4>版本</h4>
+    <table class="vt">
+      <tr><th>版本</th><td>${esc(v ? v.version : "?")}</td></tr>
+      <tr><th>需要 App</th><td>${esc(v && v.min_app_version ? v.min_app_version + " 及以上" : "不限")}</td></tr>
+      <tr><th>校验和</th><td class="mono sha">${esc(v && v.sha256 ? v.sha256 : "无")}</td></tr>
+    </table>
+    ${v && v.changelog ? `<h4>更新说明</h4><pre class="log">${esc(v.changelog)}</pre>` : ""}
 
-  layer.open({
-    type: 1,
-    title: esc(p.name || p.id),
-    shadeClose: true,
-    area: "640px",
-    content,
-    end: () => setQueryId(null),
-  });
-  setQueryId(p.id);
+    <h4>怎么装</h4>
+    <ol class="how">
+      <li>推荐：打开 LinPlayer → 侧栏「插件」→ 在「发现」里搜「${esc(p.name)}」→ 安装。</li>
+      <li>或者：下载下面这个 .ipk，在「插件 → 已安装 → 安装本地插件」里选它。</li>
+    </ol>
+    <div class="acts">
+      ${v ? `<a class="btn primary" href="${esc(v.package_url)}" download>下载 ${esc(p.id)}-${esc(v.version)}.ipk</a>` : ""}
+      ${p.homepage ? `<a class="btn" href="${esc(p.homepage)}" target="_blank" rel="noreferrer">插件主页</a>` : ""}
+    </div>`;
+  dlg.showModal();
+  history.replaceState(null, "", `?id=${encodeURIComponent(id)}`);
 }
 
-function setQueryId(id) {
-  const u = new URL(location.href);
-  if (id) u.searchParams.set("id", id);
-  else u.searchParams.delete("id");
-  history.replaceState({}, "", u.toString());
-}
+// ---------------- 启动 ----------------
 
-function openFromQuery() {
-  const id = new URL(location.href).searchParams.get("id");
-  if (id && state.plugins.some((p) => p.id === id)) openDetail(id);
-}
+async function init() {
+  el("tabs").innerHTML = CATEGORIES.map(
+    (c) => `<button class="tab" data-cat="${c.id}">${esc(c.label)}<i class="n">0</i></button>`,
+  ).join("");
 
-// ---------------- events ----------------
-function bindSearch() {
-  let t;
-  els.q.addEventListener("input", () => {
-    clearTimeout(t);
-    t = setTimeout(() => {
-      state.q = els.q.value;
-      renderAll();
-    }, 120);
-  });
-}
-
-function bindClicks() {
-  // 卡片：点链接(下载)只下载；点其余区域开详情。
-  for (const target of TABS) {
-    els["grid" + target].addEventListener("click", (e) => {
-      if (e.target.closest("a")) return;
-      const card = e.target.closest(".pcard");
-      if (card) openDetail(card.getAttribute("data-id"));
-    });
-  }
-  // 复制清单链接（弹窗内，事件委托到 document）。
-  document.addEventListener("click", async (e) => {
-    const c = e.target.closest("[data-copy]");
-    if (!c) return;
-    const txt = c.getAttribute("data-copy");
-    if (!txt) return;
-    try {
-      await navigator.clipboard.writeText(txt);
-      if (layer) layer.msg("已复制清单链接");
-    } catch {
-      window.prompt("复制：", txt);
+  try {
+    const reg = await fetchJson(REGISTRY_URL);
+    const v = Number(reg && reg.schemaVersion);
+    state.plugins = Array.isArray(reg && reg.plugins) ? reg.plugins : [];
+    // 老的 v1 索引里 author 是对象、版本键是 camelCase，这一页读出来会到处是 undefined。
+    // 与其画一堆空白，不如直说。
+    if (v && v < 2) {
+      el("warn").hidden = false;
+      el("warn").textContent = `这个 registry.json 还是旧版（schemaVersion ${v}），需要用 tools/build.py 重新生成。`;
     }
+  } catch (e) {
+    el("warn").hidden = false;
+    el("warn").textContent = `插件索引加载失败：${e}。刷新试试，或直接去 GitHub 仓库看。`;
+  }
+
+  el("q").addEventListener("input", (e) => {
+    state.q = e.target.value.trim();
+    render();
   });
+  el("tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-cat]");
+    if (!b || b.disabled) return;
+    state.cat = b.dataset.cat;
+    render();
+  });
+  el("grid").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-detail]");
+    if (b) openDetail(b.dataset.detail);
+  });
+  el("detail").addEventListener("close", () => history.replaceState(null, "", location.pathname));
+  el("dClose").addEventListener("click", () => el("detail").close());
+
+  render();
+  document.body.classList.remove("loading");
+
+  // 深链 ?id=com.linplayer.xxx 直接开详情（分享用）。
+  const want = new URLSearchParams(location.search).get("id");
+  if (want) openDetail(want);
 }
 
 init();

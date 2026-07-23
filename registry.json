@@ -1,237 +1,296 @@
 {
-  "schemaVersion": 1,
-  "updatedAt": "2026-07-22T04:36:22Z",
+  "schemaVersion": 2,
   "plugins": [
-    {
-      "id": "com.linplayer.cf-proxy",
-      "name": "CF 优选反代",
-      "description": "为走 Cloudflare 的服务器线路，从本地实测挑出最快的 CF 边缘 IP 并启用本地反代改写线路；比公共优选 IP 更贴合你的网络。支持定时测速，全天候保速。",
-      "author": {
-        "name": "LinPlayer"
-      },
-      "tags": [
-        "cloudflare",
-        "优选",
-        "反代",
-        "加速",
-        "network"
-      ],
-      "targets": [
-        "pc",
-        "mobile",
-        "tv"
-      ],
-      "runtime": "js",
-      "versions": [
-        {
-          "version": "1.0.0",
-          "channel": "stable",
-          "apiVersion": 1,
-          "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.cf-proxy/1.0.0/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.cf-proxy-1.0.0.ipk"
-        }
-      ]
-    },
     {
       "id": "com.linplayer.hello",
       "name": "Hello 示例",
-      "description": "最小教程型插件：在首页统计旁显示一句问候，并提供一个设置页修改称呼。适合照抄起步。",
-      "author": {
-        "name": "LinPlayer"
-      },
+      "description": "最小教学插件：首页显示一句问候，设置里可以改称呼。想写插件，从抄它开始。",
+      "author": "LinPlayer",
+      "category": "tools",
       "tags": [
-        "demo",
-        "guide"
+        "示例",
+        "入门",
+        "教程"
       ],
       "targets": [
-        "pc",
-        "mobile"
+        "pc"
       ],
-      "runtime": "js",
+      "permissions": [
+        "ui",
+        "storage",
+        "extensions"
+      ],
+      "versions": [
+        {
+          "version": "2.0.0",
+          "api_version": 2,
+          "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.hello-2.0.0.ipk",
+          "sha256": "4b6ce6b82ce11a20ee24c3a3f4dbd5cba82584b3a50fd4033ac3b24c3b2ef358"
+        }
+      ],
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzJmNmRmNiIvPgogIDxwYXRoIGQ9Ik0xNCA0NFYyMGg2djloMTB2LTloNnYyNGgtNnYtOUgyMHY5eiIgZmlsbD0iI2ZmZiIvPgogIDxjaXJjbGUgY3g9IjQ2IiBjeT0iNDEiIHI9IjMuNSIgZmlsbD0iI2ZmZDE2NiIvPgo8L3N2Zz4K",
+      "contributes": {
+        "panels": [
+          {
+            "id": "greeting",
+            "title": "问候",
+            "slot": "home.stats",
+            "handler": "renderGreeting"
+          },
+          {
+            "id": "settings",
+            "title": "Hello 设置",
+            "slot": "settings",
+            "handler": "renderSettings",
+            "save": "saveSettings"
+          }
+        ]
+      },
+      "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository"
+    },
+    {
+      "id": "com.linplayer.m3u",
+      "name": "M3U 直播源",
+      "description": "填一个 m3u / m3u8 播放列表地址，按分组浏览频道并直接播放。支持搜索、台标、EPG 分组。",
+      "author": "LinPlayer",
+      "category": "source",
+      "tags": [
+        "直播",
+        "iptv",
+        "m3u",
+        "数据源"
+      ],
+      "targets": [
+        "pc"
+      ],
+      "permissions": [
+        "sources",
+        "http",
+        "storage"
+      ],
       "versions": [
         {
           "version": "1.0.0",
-          "channel": "stable",
-          "apiVersion": 1,
-          "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.hello/1.0.0/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.hello-1.0.0.ipk"
+          "api_version": 2,
+          "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.m3u-1.0.0.ipk",
+          "sha256": "7c20ec92751fa9940f7dc03c025cf911acba4b36001b2222912779118f48fd22"
         }
-      ]
+      ],
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iI2UwNTMzZCIvPgogIDxwYXRoIGQ9Ik0yNCAxOGwyMiAxNC0yMiAxNHoiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTIgMjB2MjQiIHN0cm9rZT0iI2ZmZDE2NiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+Cg==",
+      "contributes": {
+        "dataSources": [
+          {
+            "id": "playlist",
+            "name": "M3U 直播源",
+            "auth": {
+              "fields": [
+                {
+                  "id": "base_url",
+                  "label": "播放列表地址",
+                  "type": "url",
+                  "required": true,
+                  "placeholder": "https://example.com/iptv.m3u"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository"
+    },
+    {
+      "id": "com.linplayer.sandbox-demo",
+      "name": "沙箱界面示例",
+      "description": "声明式界面画不出来的东西，用自带网页画。演示 iframe 逃生舱：插件自己的 HTML/CSS/JS，跑在隔离沙箱里。",
+      "author": "LinPlayer",
+      "category": "ui",
+      "tags": [
+        "示例",
+        "沙箱",
+        "iframe",
+        "自定义界面"
+      ],
+      "targets": [
+        "pc"
+      ],
+      "permissions": [
+        "sandbox"
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "api_version": 2,
+          "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.sandbox-demo-1.0.0.ipk",
+          "sha256": "09dea3088584b8fda4d6ed5539c4d0c661a9fd8a7df8711b93f5f2c102ae8bf9"
+        }
+      ],
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzZiNGRmNiIvPgogIDxyZWN0IHg9IjEzIiB5PSIxNiIgd2lkdGg9IjM4IiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cGF0aCBkPSJNMTMgMjVoMzgiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPGNpcmNsZSBjeD0iMTkiIGN5PSIyMC41IiByPSIxLjgiIGZpbGw9IiNmZmYiLz4KICA8cGF0aCBkPSJNMjAgNDJsNy04IDYgNSA1LTcgNiAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZkMTY2IiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+Cg==",
+      "contributes": {
+        "sandboxViews": [
+          {
+            "id": "chart",
+            "title": "自绘图表",
+            "entry": "view/index.html"
+          }
+        ]
+      },
+      "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository"
     },
     {
       "id": "com.linplayer.telegram-notify",
       "name": "Telegram 播放通知",
-      "description": "每播放完一集，自动通过 Telegram Bot 发送通知。可在设置中填写 Bot Token 和 Chat ID。",
-      "author": {
-        "name": "LinPlayer"
-      },
+      "description": "每看完一集，自动用你的 Telegram Bot 发一条消息。填个 Bot Token 和 Chat ID 就能用。",
+      "author": "LinPlayer",
+      "category": "notify",
       "tags": [
-        "notify",
+        "通知",
         "telegram",
-        "player"
+        "播放"
       ],
       "targets": [
-        "mobile",
-        "pc",
-        "tv"
+        "pc"
       ],
-      "runtime": "js",
+      "permissions": [
+        "player.read",
+        "http",
+        "storage",
+        "ui",
+        "extensions"
+      ],
       "versions": [
         {
-          "version": "1.0.0",
-          "channel": "stable",
-          "apiVersion": 1,
-          "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.telegram-notify/1.0.0/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.telegram-notify-1.0.0.ipk"
+          "version": "2.0.0",
+          "api_version": 2,
+          "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.telegram-notify-2.0.0.ipk",
+          "sha256": "971d1b33f968e092e28da588b5771f1aa43a653cfca9a16c22e8f155fcf5bcee"
         }
-      ]
+      ],
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzIyOWVkOSIvPgogIDxwYXRoIGQ9Ik0xMyAzMmwzOC0xNC02IDMwLTEyLTktNSA4LTItMTJ6IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTI4IDM1bDE3LTEzLTEzIDE2eiIgZmlsbD0iI2NmZThmNyIvPgo8L3N2Zz4K",
+      "contributes": {
+        "panels": [
+          {
+            "id": "settings",
+            "title": "Telegram 通知",
+            "slot": "settings",
+            "handler": "renderSettings",
+            "save": "saveSettings",
+            "test": "sendTest"
+          }
+        ]
+      },
+      "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository"
     },
     {
-      "id": "com.linplayer.telegram-notify-ios",
-      "name": "Telegram 播放通知 (iOS)",
-      "description": "iOS 数据驱动示例：每播完一集，通过 Telegram Bot 发送通知。纯声明式、无可执行代码，App Store 合规。",
-      "author": {
-        "name": "LinPlayer"
-      },
-      "tags": [
-        "notify",
-        "telegram",
-        "player",
-        "ios"
-      ],
-      "targets": [
-        "ios"
-      ],
-      "runtime": "data",
-      "versions": [
-        {
-          "version": "1.0.0",
-          "channel": "stable",
-          "apiVersion": 1,
-          "minHostVersion": "1.1.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.telegram-notify-ios/1.0.0/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.telegram-notify-ios-1.0.0.ipk"
-        }
-      ]
-    },
-    {
-      "id": "com.linplayer.uhdnow-request",
-      "name": "UHDNow 求片",
-      "description": "在 App 内提交 UHDNow 求片 / 追新：搜索后弹出带海报的结果列表点选，填说明提交；查看我的求片与全部求片（带海报），为热门求片投票。对应官网 /user/help/media-requests。",
-      "author": {
-        "name": "LinPlayer"
-      },
+      "id": "com.linplayer.uhdnow",
+      "name": "UHDNow 助手",
+      "description": "UHDNow 用户的三合一工具：首页看剩余流量、在 App 里求片/追新/投票、给线路测速。账号只需填一次。",
+      "author": "LinPlayer",
+      "category": "tools",
       "tags": [
         "uhdnow",
         "求片",
-        "media-request",
-        "追新"
-      ],
-      "targets": [
-        "pc",
-        "mobile",
-        "tv"
-      ],
-      "runtime": "js",
-      "versions": [
-        {
-          "version": "1.0.7",
-          "channel": "stable",
-          "apiVersion": 1,
-          "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-request/1.0.7/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-request-1.0.7.ipk"
-        }
-      ]
-    },
-    {
-      "id": "com.linplayer.uhdnow-speed",
-      "name": "UHDNow 线路测速",
-      "description": "从线路列表里选一条 UHDNow 线路测下载速度，全程进度可视化。测试大小对标官网 32/64/100 MiB。需登录网站账号，会消耗账户流量。",
-      "author": {
-        "name": "LinPlayer"
-      },
-      "tags": [
-        "uhdnow",
-        "speed",
         "测速",
-        "network"
+        "流量"
       ],
       "targets": [
-        "pc",
-        "mobile",
-        "tv"
+        "pc"
       ],
-      "runtime": "js",
-      "versions": [
-        {
-          "version": "1.0.7",
-          "channel": "stable",
-          "apiVersion": 1,
-          "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-speed/1.0.7/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-speed-1.0.7.ipk"
-        }
-      ]
-    },
-    {
-      "id": "com.linplayer.uhdnow-traffic",
-      "name": "UHDNow 流量统计",
-      "description": "当 Emby 服务器地址包含关键字 uhdnow 时，在首页媒体计数（电影/剧集/总共）旁边显示账户的总流量与剩余流量。",
-      "author": {
-        "name": "LinPlayer"
-      },
-      "tags": [
-        "uhdnow",
-        "traffic",
-        "homeStats"
+      "permissions": [
+        "http",
+        "storage",
+        "ui",
+        "extensions",
+        "emby.read"
       ],
-      "targets": [
-        "pc",
-        "mobile"
-      ],
-      "runtime": "js",
       "versions": [
         {
           "version": "1.0.0",
-          "channel": "stable",
-          "apiVersion": 1,
-          "minHostVersion": "1.0.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-traffic/1.0.0/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-traffic-1.0.0.ipk"
+          "api_version": 2,
+          "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-1.0.0.ipk",
+          "sha256": "4f7bddcf177e7d6bc51cf0c37c61261ddf8bf23d0cfa9cd20c4d46bb242092d9"
         }
-      ]
+      ],
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzFmMjkzNyIvPgogIDxwYXRoIGQ9Ik0zNCAxMkwxOCAzNmgxMmwtNCAxNiAxOC0yNkgzMnoiIGZpbGw9IiNmZmQxNjYiLz4KPC9zdmc+Cg==",
+      "contributes": {
+        "panels": [
+          {
+            "id": "traffic",
+            "title": "UHDNow 流量",
+            "slot": "home.stats",
+            "handler": "renderTraffic"
+          },
+          {
+            "id": "hub",
+            "title": "UHDNow 助手",
+            "slot": "sidebar",
+            "icon": "bolt",
+            "handler": "renderHub",
+            "go": "hubGo",
+            "search": "doSearch",
+            "vote": "doVote",
+            "speed": "doSpeed"
+          },
+          {
+            "id": "account",
+            "title": "UHDNow 账号",
+            "slot": "settings",
+            "handler": "renderAccount",
+            "save": "saveAccount"
+          }
+        ]
+      },
+      "homepage": "https://www.uhdnow.com/user"
     },
     {
-      "id": "com.linplayer.uhdnow-traffic-ios",
-      "name": "UHDNow 流量统计 (iOS)",
-      "description": "iOS 数据驱动版：登录 uhdnow 换 token → 拉流量 → 算剩余，全部在设备上由 App 内置解释器执行。无可执行代码、无远端服务器，App Store 合规。当服务器地址含 uhdnow 时在首页显示。请在插件设置里填 uhdnow 网站账号密码。",
-      "author": {
-        "name": "LinPlayer"
-      },
+      "id": "com.linplayer.ui-kit",
+      "name": "界面块速查",
+      "description": "把声明式界面能用的每一种块都画一遍，旁边贴上对应的 JSON。写插件时开着它照抄。",
+      "author": "LinPlayer",
+      "category": "ui",
       "tags": [
-        "uhdnow",
-        "traffic",
-        "homeStats",
-        "ios"
+        "示例",
+        "界面",
+        "速查"
       ],
       "targets": [
-        "ios"
+        "pc"
       ],
-      "runtime": "data",
+      "permissions": [
+        "ui",
+        "extensions"
+      ],
       "versions": [
         {
           "version": "1.0.0",
-          "channel": "stable",
-          "apiVersion": 1,
-          "minHostVersion": "1.1.0",
-          "manifestUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/plugins/com.linplayer.uhdnow-traffic-ios/1.0.0/manifest.json",
-          "packageUrl": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.uhdnow-traffic-ios-1.0.0.ipk"
+          "api_version": 2,
+          "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.ui-kit-1.0.0.ipk",
+          "sha256": "c8b694025606cf2497c150e136aa16cfbf91d3b7e901d4c4e34aa174204d17c2"
         }
-      ]
+      ],
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzBlOWY2ZSIvPgogIDxyZWN0IHg9IjE0IiB5PSIxNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2ZmZiIvPjxyZWN0IHg9IjM0IiB5PSIxNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iMyIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iLjY1Ii8+PHJlY3QgeD0iMTQiIHk9IjM0IiB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuNjUiLz48cmVjdCB4PSIzNCIgeT0iMzQiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNmZmQxNjYiLz4KPC9zdmc+Cg==",
+      "contributes": {
+        "panels": [
+          {
+            "id": "catalogue",
+            "title": "界面块速查",
+            "slot": "page",
+            "handler": "renderCatalogue",
+            "demo": "onDemo"
+          },
+          {
+            "id": "dialogs",
+            "title": "弹窗试玩",
+            "slot": "settings",
+            "handler": "renderDialogs",
+            "toast": "demoToast",
+            "dialog": "demoDialog",
+            "form": "demoForm",
+            "list": "demoList",
+            "progress": "demoProgress"
+          }
+        ]
+      },
+      "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository"
     }
   ]
 }

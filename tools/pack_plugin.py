@@ -1,19 +1,29 @@
 #!/usr/bin/env python3
-"""把一个插件版本目录打包成 .ipk（zip），供 App「设置 → 插件 → +」安装。
+"""把一个插件版本目录打包成 .ipk，供 App「插件 → 安装本地插件」使用。
 
 用法:
     python tools/pack_plugin.py plugins/<id>/<version>/ [输出目录]
 
-产物默认输出到 packages/<id>-<version>.ipk
-.ipk 内部就是 zip：包根含 manifest.json + main.js（+ 可选 icon/assets/README）。
+.ipk 就是 zip：包根必须含 manifest.json，以及 manifest.main 指向的入口 js。
+宿主按 `by_name("manifest.json")` 直接取（`crates/core/src/plugins/installer.rs`），
+所以**不能**在外面多包一层目录。
 """
+import hashlib
 import json
 import sys
 import zipfile
 from pathlib import Path
 
-# 固定时间戳：让重复打包的产物字节稳定，避免提交时产生无意义的 git 变更。
+# 固定时间戳 + 固定顺序 + 固定权限位 = 同样的输入永远产出同样的字节。
+#
+# 这不只是「避免无意义的 git 变更」——v2 的 registry.json 里带 sha256。
+# 打包不可复现的话，每次 build 都会算出一份新哈希，等于每次发布都在改所有插件的
+# 校验和，谁也分不清是插件内容真的变了、还是打包器自己在抖。
 _FIXED_DATE = (2020, 1, 1, 0, 0, 0)
+
+# 不进包的东西。README 要进（App 详情页读它），CHANGELOG 只进 registry 不进包。
+_SKIP_NAMES = {".DS_Store", "Thumbs.db", "CHANGELOG.md"}
+_SKIP_DIRS = {"__pycache__", ".git"}
 
 
 def pack(plugin_dir: Path, out_dir: Path) -> Path:
@@ -33,16 +43,27 @@ def pack(plugin_dir: Path, out_dir: Path) -> Path:
     if ipk.exists():
         ipk.unlink()
 
-    # 扁平打包目录内容（manifest.json 必须在包根）。
-    with zipfile.ZipFile(ipk, "w", zipfile.ZIP_DEFLATED) as z:
-        for f in sorted(plugin_dir.rglob("*")):
-            if f.is_file():
-                zi = zipfile.ZipInfo(
-                    f.relative_to(plugin_dir).as_posix(), date_time=_FIXED_DATE
-                )
-                zi.compress_type = zipfile.ZIP_DEFLATED
-                z.writestr(zi, f.read_bytes())
+    files = [
+        f
+        for f in sorted(plugin_dir.rglob("*"))
+        if f.is_file()
+        and f.name not in _SKIP_NAMES
+        and not any(part in _SKIP_DIRS for part in f.relative_to(plugin_dir).parts)
+    ]
+
+    with zipfile.ZipFile(ipk, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        for f in files:
+            zi = zipfile.ZipInfo(f.relative_to(plugin_dir).as_posix(), date_time=_FIXED_DATE)
+            zi.compress_type = zipfile.ZIP_DEFLATED
+            # 权限位也要钉死，否则 Windows 和 Linux 打出来的包字节不同 → sha256 不同。
+            zi.external_attr = 0o644 << 16
+            z.writestr(zi, f.read_bytes())
     return ipk
+
+
+def sha256_of(path: Path) -> str:
+    """.ipk 的 sha256（小写十六进制）。写进 registry，App 下载后逐字节校验。"""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def main():
@@ -62,6 +83,7 @@ def main():
         print(str(e), file=sys.stderr)
         return 1
     print(f"已生成: {ipk}")
+    print(f"sha256: {sha256_of(ipk)}")
     return 0
 
 

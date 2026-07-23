@@ -1,0 +1,50 @@
+{
+  "$schema": "../../../schemas/manifest.schema.json",
+  "id": "com.linplayer.uhdnow",
+  "version": "1.0.0",
+  "apiVersion": 2,
+  "name": "UHDNow 助手",
+  "description": "UHDNow 用户的三合一工具：首页看剩余流量、在 App 里求片/追新/投票、给线路测速。账号只需填一次。",
+  "author": "LinPlayer",
+  "category": "tools",
+  "targets": ["pc"],
+  "icon": "icon.svg",
+  "license": "MIT",
+  "tags": ["uhdnow", "求片", "测速", "流量"],
+  "homepage": "https://www.uhdnow.com/user",
+  "permissions": ["http", "storage", "ui", "extensions", "emby.read"],
+  "httpAllowedHosts": [
+    "www.uhdnow.com",
+    "uhdnow.com",
+    "*.uhdnow.com",
+    "*.uhdnow.online"
+  ],
+  "contributes": {
+    "panels": [
+      {
+        "id": "traffic",
+        "title": "UHDNow 流量",
+        "slot": "home.stats",
+        "handler": "renderTraffic"
+      },
+      {
+        "id": "hub",
+        "title": "UHDNow 助手",
+        "slot": "sidebar",
+        "icon": "bolt",
+        "handler": "renderHub",
+        "go": "hubGo",
+        "search": "doSearch",
+        "vote": "doVote",
+        "speed": "doSpeed"
+      },
+      {
+        "id": "account",
+        "title": "UHDNow 账号",
+        "slot": "settings",
+        "handler": "renderAccount",
+        "save": "saveAccount"
+      }
+    ]
+  }
+}

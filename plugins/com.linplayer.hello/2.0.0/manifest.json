@@ -1,0 +1,33 @@
+{
+  "$schema": "../../../schemas/manifest.schema.json",
+  "id": "com.linplayer.hello",
+  "version": "2.0.0",
+  "apiVersion": 2,
+  "name": "Hello 示例",
+  "description": "最小教学插件：首页显示一句问候，设置里可以改称呼。想写插件，从抄它开始。",
+  "author": "LinPlayer",
+  "category": "tools",
+  "targets": ["pc"],
+  "icon": "icon.svg",
+  "license": "MIT",
+  "tags": ["示例", "入门", "教程"],
+  "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository",
+  "permissions": ["ui", "storage", "extensions"],
+  "contributes": {
+    "panels": [
+      {
+        "id": "greeting",
+        "title": "问候",
+        "slot": "home.stats",
+        "handler": "renderGreeting"
+      },
+      {
+        "id": "settings",
+        "title": "Hello 设置",
+        "slot": "settings",
+        "handler": "renderSettings",
+        "save": "saveSettings"
+      }
+    ]
+  }
+}

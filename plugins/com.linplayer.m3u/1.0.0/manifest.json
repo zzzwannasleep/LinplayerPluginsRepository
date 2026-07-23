@@ -1,0 +1,36 @@
+{
+  "$schema": "../../../schemas/manifest.schema.json",
+  "id": "com.linplayer.m3u",
+  "version": "1.0.0",
+  "apiVersion": 2,
+  "name": "M3U 直播源",
+  "description": "填一个 m3u / m3u8 播放列表地址，按分组浏览频道并直接播放。支持搜索、台标、EPG 分组。",
+  "author": "LinPlayer",
+  "category": "source",
+  "targets": ["pc"],
+  "icon": "icon.svg",
+  "license": "MIT",
+  "tags": ["直播", "iptv", "m3u", "数据源"],
+  "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository",
+  "permissions": ["sources", "http", "storage"],
+  "httpAllowedHosts": ["$sourceServer"],
+  "contributes": {
+    "dataSources": [
+      {
+        "id": "playlist",
+        "name": "M3U 直播源",
+        "auth": {
+          "fields": [
+            {
+              "id": "base_url",
+              "label": "播放列表地址",
+              "type": "url",
+              "required": true,
+              "placeholder": "https://example.com/iptv.m3u"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

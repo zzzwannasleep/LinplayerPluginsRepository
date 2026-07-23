@@ -1,8 +1,7 @@
-// 插件市场共享逻辑（无 DOM，可被 market.js / guide.js 等页面复用）。
-// 数据契约见 registry.json / blocked.json。
+// 市场页共享逻辑（无 DOM，可被各页面复用）。数据契约见 registry.json。
 
 export function escapeHtml(s) {
-  return String(s)
+  return String(s ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -16,130 +15,52 @@ export async function fetchJson(url) {
   return await res.json();
 }
 
-export function delay(ms) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-export function parseBlocked(raw) {
-  const pluginReasons = new Map();
-  const versionReasons = new Map();
-
-  const blockedPlugins = Array.isArray(raw?.blockedPlugins) ? raw.blockedPlugins : [];
-  for (const it of blockedPlugins) {
-    if (typeof it === "string") {
-      pluginReasons.set(it, "");
-      continue;
-    }
-    if (it && typeof it === "object" && typeof it.id === "string") {
-      pluginReasons.set(it.id, typeof it.reason === "string" ? it.reason : "");
-    }
-  }
-
-  const blockedVersions = Array.isArray(raw?.blockedVersions) ? raw.blockedVersions : [];
-  for (const it of blockedVersions) {
-    if (!it) continue;
-    if (typeof it === "string") {
-      versionReasons.set(it, ""); // legacy: "id@version"
-      continue;
-    }
-    if (typeof it === "object" && typeof it.id === "string" && typeof it.version === "string") {
-      versionReasons.set(`${it.id}@${it.version}`, typeof it.reason === "string" ? it.reason : "");
-    }
-  }
-
-  return {
-    message: typeof raw?.message === "string" ? raw.message : "",
-    pluginReasons,
-    versionReasons,
-  };
-}
-
-export function parseSemver(v) {
-  const m = /^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?$/.exec(v);
-  if (!m) return null;
-  return {
-    major: Number(m[1]),
-    minor: Number(m[2]),
-    patch: Number(m[3]),
-    pre: m[4] ? m[4].split(".") : [],
-  };
-}
-
-export function cmpIdentifiers(a, b) {
-  const aNum = /^[0-9]+$/.test(a);
-  const bNum = /^[0-9]+$/.test(b);
-  if (aNum && bNum) return Number(a) - Number(b);
-  if (aNum && !bNum) return -1;
-  if (!aNum && bNum) return 1;
-  return a.localeCompare(b);
-}
-
+/** 语义化版本比较。宽松：非数字段按 0，缺段补 0（registry 是外部数据，别为一条歪版本号炸整页）。 */
 export function semverCompare(a, b) {
-  const pa = parseSemver(a);
-  const pb = parseSemver(b);
-  if (!pa || !pb) return String(a).localeCompare(String(b));
-
-  if (pa.major !== pb.major) return pa.major - pb.major;
-  if (pa.minor !== pb.minor) return pa.minor - pb.minor;
-  if (pa.patch !== pb.patch) return pa.patch - pb.patch;
-
-  const aPre = pa.pre;
-  const bPre = pb.pre;
-  if (aPre.length === 0 && bPre.length === 0) return 0;
-  if (aPre.length === 0) return 1;
-  if (bPre.length === 0) return -1;
-
-  const len = Math.max(aPre.length, bPre.length);
-  for (let i = 0; i < len; i++) {
-    const ai = aPre[i];
-    const bi = bPre[i];
-    if (ai === undefined) return -1;
-    if (bi === undefined) return 1;
-    const c = cmpIdentifiers(ai, bi);
-    if (c !== 0) return c;
+  const parse = (s) =>
+    String(s ?? "")
+      .split(/[-+]/)[0]
+      .split(".")
+      .map((x) => Number(x) || 0);
+  const va = parse(a);
+  const vb = parse(b);
+  for (let i = 0; i < Math.max(va.length, vb.length); i++) {
+    const d = (va[i] || 0) - (vb[i] || 0);
+    if (d) return d;
   }
   return 0;
 }
 
-export function pickBestVersion(versions, channel) {
+/** 取版本号最大的那一版。
+ *  ★ **不能信数组顺序** —— 同一个项目在 GitHub Releases 上栽过：id / created / published
+ *    三个键的返回顺序全是反的。自己按版本号取最大是唯一靠得住的做法。 */
+export function bestVersion(versions) {
   const list = Array.isArray(versions) ? versions.slice() : [];
-  if (list.length === 0) return null;
-
-  const byChannel = (ch) => list.filter((v) => (v?.channel ?? "stable") === ch);
-
-  let candidates = [];
-  if (channel === "all") {
-    candidates = list;
-  } else {
-    candidates = byChannel(channel);
-    if (candidates.length === 0) candidates = list;
-  }
-
-  candidates.sort((a, b) =>
-    semverCompare(String(b.version ?? "0.0.0"), String(a.version ?? "0.0.0"))
-  );
-  return candidates[0];
+  if (!list.length) return null;
+  return list.sort((a, b) => semverCompare(b.version, a.version))[0];
 }
 
-export const TARGET_LABELS = { pc: "PC 端", mobile: "移动端", tv: "TV 端" };
+export const TARGET_LABELS = { pc: "电脑", mobile: "手机", tv: "电视" };
 
-export function iconCandidates(pluginId, version) {
-  const base = `plugins/${encodeURIComponent(pluginId)}/${encodeURIComponent(version)}`;
-  return [`${base}/icon.svg`, `${base}/icon.png`];
-}
+/** 分类。和宿主 manifest.rs::CATEGORIES 一一对应。 */
+export const CATEGORIES = [
+  { id: "all", label: "全部" },
+  { id: "source", label: "数据源" },
+  { id: "ui", label: "界面" },
+  { id: "player", label: "播放" },
+  { id: "notify", label: "通知" },
+  { id: "tools", label: "工具" },
+];
 
-export function isPluginBlocked(blocked, pluginId) {
-  return blocked.pluginReasons.has(pluginId);
-}
+export const CATEGORY_LABEL = Object.fromEntries(CATEGORIES.map((c) => [c.id, c.label]));
 
-export function isVersionBlocked(blocked, pluginId, version) {
-  return blocked.versionReasons.has(`${pluginId}@${version}`);
-}
-
-export function blockedReason(blocked, pluginId, version) {
-  return (
-    blocked.versionReasons.get(`${pluginId}@${version}`) ||
-    blocked.pluginReasons.get(pluginId) ||
-    ""
-  );
+/** 搜索匹配：名称 / id / 描述 / 标签 / 作者。多个词是「与」。 */
+export function matches(p, q) {
+  if (!q) return true;
+  const hay = [p.id, p.name, p.description, p.author, ...(p.tags || [])].join(" ").toLowerCase();
+  return q
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((t) => hay.includes(t));
 }

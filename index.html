@@ -4,99 +4,64 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>Linplayer 插件市场</title>
+    <title>LinPlayer 插件市场</title>
+    <meta name="description" content="LinPlayer 的官方插件仓库：数据源、界面扩展、播放增强、通知与工具。" />
     <link rel="icon" type="image/png" href="assets/icons/app_icon_transparent.png" />
-    <script>
-      // 全屏加载动画只在本会话首次显示;之后页面切换标记为 warm,只做淡入。
-      try {
-        if (sessionStorage.getItem("lp_seen")) document.documentElement.setAttribute("data-warm", "1");
-        else sessionStorage.setItem("lp_seen", "1");
-      } catch (e) {}
-    </script>
-    <link rel="stylesheet" href="assets/vendor/layui/css/layui.css" />
-    <link rel="stylesheet" href="assets/vendor/animate/animate.min.css" />
-    <link rel="stylesheet" href="assets/ui.css?v=4" />
+    <link rel="stylesheet" href="assets/ui.css?v=5" />
   </head>
-  <body>
-    <!-- 加载动画 -->
-    <div id="preloader">
-      <img
-        class="pl-logo animate__animated animate__pulse animate__infinite"
-        src="assets/icons/app_icon_transparent.png"
-        alt="Linplayer"
-      />
-      <div class="pl-bar"></div>
-      <div class="pl-text" id="plText">正在加载插件市场…</div>
-    </div>
+  <body class="loading">
+    <header class="top">
+      <a class="brand" href="index.html">
+        <img src="assets/icons/app_icon_transparent.png" alt="" />
+        <span>LinPlayer <b>插件市场</b></span>
+      </a>
+      <nav>
+        <a class="on" href="index.html">插件</a>
+        <a href="guide.html">开发指南</a>
+        <a href="spec.html">规范</a>
+        <a href="https://github.com/zzzwannasleep/LinplayerPluginsRepository" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+    </header>
 
-    <!-- 主体（数据就绪后进入动画显示） -->
-    <div id="app" class="is-hidden">
-      <header class="topbar">
-        <div class="topbar__inner">
-          <div class="brand">
-            <img class="brand__logo" src="assets/icons/app_icon_transparent.png" alt="" />
-            <div>
-              <div class="brand__title">Linplayer 插件市场</div>
-              <div class="brand__sub">挑选插件，下载 .ipk，在 App 内安装</div>
-            </div>
-          </div>
-          <nav class="nav">
-            <a href="index.html" class="is-active">插件市场</a>
-            <a href="guide.html">开发指南</a>
-            <a href="spec.html">插件规范</a>
-            <a
-              href="https://github.com/zzzwannasleep/LinplayerPluginsRepository"
-              target="_blank"
-              rel="noreferrer"
-              >GitHub</a
-            >
-          </nav>
-        </div>
-      </header>
+    <main class="wrap">
+      <div class="hero">
+        <h1>插件</h1>
+        <p>装上就用，随时停用。每个插件要什么权限，装之前就写在这儿。</p>
+      </div>
 
-      <main class="wrap">
-        <div class="toolbar">
-          <label class="search">
-            <i class="ico layui-icon layui-icon-search"></i>
-            <input id="q" placeholder="搜索插件：名称 / ID / 描述 / 标签" autocomplete="off" />
-          </label>
-          <div class="count">
-            <b id="count">0</b> 个插件 · 更新于 <span id="updatedAt">-</span>
-          </div>
-        </div>
+      <input id="q" class="search" type="search" placeholder="搜插件：名称 / 用途 / 标签" autocomplete="off" />
 
-        <div id="warn" class="warn is-hidden"></div>
+      <div id="tabs" class="tabs"></div>
 
-        <div class="layui-tab layui-tab-brief" lay-filter="marketTabs">
-          <ul class="layui-tab-title">
-            <li class="layui-this" lay-id="pc">PC 端</li>
-            <li lay-id="mobile">移动端</li>
-            <li lay-id="tv">TV 端</li>
-          </ul>
-          <div class="layui-tab-content">
-            <div class="layui-tab-item layui-show"><div id="grid-pc" class="cardgrid"></div></div>
-            <div class="layui-tab-item"><div id="grid-mobile" class="cardgrid"></div></div>
-            <div class="layui-tab-item"><div id="grid-tv" class="cardgrid"></div></div>
-          </div>
-        </div>
+      <p id="warn" class="warn" hidden></p>
 
-        <div class="foot">
-          <details>
-            <summary>免责声明</summary>
-            <p>
-              本仓库插件由社区贡献，仅供学习交流。插件可能访问第三方站点并返回不稳定结果。
-              请在合法合规前提下使用。维护者不对插件内容及由此带来的损失负责。
-            </p>
-          </details>
-        </div>
-      </main>
-    </div>
+      <p class="count"><b id="count">0</b> 个插件</p>
+      <div id="grid" class="grid"></div>
 
-    <noscript>
-      <div style="padding: 24px; text-align: center">该页面需要启用 JavaScript 才能加载插件列表。</div>
-    </noscript>
+      <section class="foot">
+        <h4>关于安全</h4>
+        <p>
+          插件跑在一个受限的 JS 引擎里：能做什么由清单里声明的权限决定，出网只允许访问清单
+          列出的域名（空的就是完全不能出网）。安装包带 sha256 校验和，App 下载后逐字节核对。
+          <b>不做代码签名</b> —— 校验和只能保证你拿到的和仓库里的是同一份，不代表内容被审计过。
+        </p>
+        <h4>免责声明</h4>
+        <p>
+          插件可能访问第三方站点并返回不稳定的结果。请在合法合规的前提下使用；维护者不对插件内容
+          及由此带来的损失负责。
+        </p>
+      </section>
+    </main>
 
-    <script src="assets/vendor/layui/layui.js"></script>
-    <script type="module" src="assets/market.js?v=4"></script>
+    <dialog id="detail" class="dlg">
+      <div class="dlg-hd">
+        <h3 id="dTitle"></h3>
+        <button id="dClose" class="x" aria-label="关闭">×</button>
+      </div>
+      <div id="dBody" class="dlg-bd"></div>
+    </dialog>
+
+    <noscript><p class="wrap">这一页需要 JavaScript 才能列出插件。</p></noscript>
+    <script type="module" src="assets/market.js?v=5"></script>
   </body>
 </html>

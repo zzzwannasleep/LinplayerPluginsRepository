@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>沙箱界面示例</title>
+    <style>
+      /* 沙箱里是一张普通网页：自己写 CSS，自己管深浅色。
+         宿主的主题变量在这里**拿不到** —— 独立 origin 的代价。
+         想跟随主题就靠 prefers-color-scheme。 */
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 20px;
+        font: 14px/1.6 system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+        background: #f6f7f9; color: #1c1f23;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #16181c; color: #e6e8eb; }
+        .card { background: #1e2126 !important; }
+        .bar { background: #2a2e35 !important; }
+      }
+      .card { background: #fff; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+      h1 { font-size: 17px; margin: 0 0 6px; }
+      p.hint { margin: 0 0 14px; opacity: .65; font-size: 13px; }
+      .row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+      .row span:first-child { width: 76px; flex: none; opacity: .8; }
+      .bar { flex: 1; height: 10px; background: #e8eaee; border-radius: 999px; overflow: hidden; }
+      .bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #2f6df6, #7aa5ff); }
+      .val { width: 46px; text-align: right; font-variant-numeric: tabular-nums; }
+      canvas { width: 100%; height: 140px; display: block; }
+      button {
+        font: inherit; padding: 7px 14px; border-radius: 8px; cursor: pointer;
+        border: 1px solid rgba(127,127,127,.35); background: transparent; color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>这是插件自己的网页</h1>
+      <p class="hint">
+        它跑在一个独立 origin 的 iframe 里，拿不到 <code>ctx</code>，也拿不到 App 的任何接口 ——
+        这正是它被允许存在的原因。
+      </p>
+      <div id="bars"></div>
+    </div>
+
+    <div class="card">
+      <h1>声明式界面画不出来的东西</h1>
+      <p class="hint">比如一张随手画的折线图。逃生舱里想用 canvas / SVG / WebGL 都行。</p>
+      <canvas id="chart" width="600" height="140"></canvas>
+      <div class="row" style="margin-top:12px">
+        <button id="shuffle">换一组数</button>
+      </div>
+    </div>
+
+    <script>
+      // 没有构建步骤，没有依赖，就是一个 <script>。
+      const rand = (n, max) => Array.from({ length: n }, () => Math.round(Math.random() * max));
+
+      function drawBars(data) {
+        document.getElementById("bars").innerHTML = data
+          .map(
+            (d) => `<div class="row">
+                      <span>${d.label}</span>
+                      <span class="bar"><i style="width:${d.pct}%"></i></span>
+                      <span class="val">${d.pct}%</span>
+                    </div>`
+          )
+          .join("");
+      }
+
+      function drawChart(values) {
+        const c = document.getElementById("chart");
+        const ctx2d = c.getContext("2d");
+        const w = c.width, h = c.height, pad = 10;
+        const max = Math.max(...values, 1);
+        ctx2d.clearRect(0, 0, w, h);
+        ctx2d.lineWidth = 2;
+        ctx2d.strokeStyle = "#2f6df6";
+        ctx2d.beginPath();
+        values.forEach((v, i) => {
+          const x = pad + (i * (w - pad * 2)) / (values.length - 1);
+          const y = h - pad - (v / max) * (h - pad * 2);
+          i ? ctx2d.lineTo(x, y) : ctx2d.moveTo(x, y);
+        });
+        ctx2d.stroke();
+      }
+
+      function refresh() {
+        drawBars([
+          { label: "电影", pct: 20 + Math.round(Math.random() * 70) },
+          { label: "剧集", pct: 20 + Math.round(Math.random() * 70) },
+          { label: "动画", pct: 20 + Math.round(Math.random() * 70) }
+        ]);
+        drawChart(rand(14, 100));
+      }
+
+      document.getElementById("shuffle").addEventListener("click", refresh);
+      refresh();
+    </script>
+  </body>
+</html>

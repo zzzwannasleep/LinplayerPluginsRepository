@@ -1,0 +1,38 @@
+{
+  "$schema": "../../../schemas/manifest.schema.json",
+  "id": "com.linplayer.ui-kit",
+  "version": "1.0.0",
+  "apiVersion": 2,
+  "name": "界面块速查",
+  "description": "把声明式界面能用的每一种块都画一遍，旁边贴上对应的 JSON。写插件时开着它照抄。",
+  "author": "LinPlayer",
+  "category": "ui",
+  "targets": ["pc"],
+  "icon": "icon.svg",
+  "license": "MIT",
+  "tags": ["示例", "界面", "速查"],
+  "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository",
+  "permissions": ["ui", "extensions"],
+  "contributes": {
+    "panels": [
+      {
+        "id": "catalogue",
+        "title": "界面块速查",
+        "slot": "page",
+        "handler": "renderCatalogue",
+        "demo": "onDemo"
+      },
+      {
+        "id": "dialogs",
+        "title": "弹窗试玩",
+        "slot": "settings",
+        "handler": "renderDialogs",
+        "toast": "demoToast",
+        "dialog": "demoDialog",
+        "form": "demoForm",
+        "list": "demoList",
+        "progress": "demoProgress"
+      }
+    ]
+  }
+}

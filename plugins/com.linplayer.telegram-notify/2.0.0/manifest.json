@@ -1,0 +1,29 @@
+{
+  "$schema": "../../../schemas/manifest.schema.json",
+  "id": "com.linplayer.telegram-notify",
+  "version": "2.0.0",
+  "apiVersion": 2,
+  "name": "Telegram 播放通知",
+  "description": "每看完一集，自动用你的 Telegram Bot 发一条消息。填个 Bot Token 和 Chat ID 就能用。",
+  "author": "LinPlayer",
+  "category": "notify",
+  "targets": ["pc"],
+  "icon": "icon.svg",
+  "license": "MIT",
+  "tags": ["通知", "telegram", "播放"],
+  "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository",
+  "permissions": ["player.read", "http", "storage", "ui", "extensions"],
+  "httpAllowedHosts": ["api.telegram.org"],
+  "contributes": {
+    "panels": [
+      {
+        "id": "settings",
+        "title": "Telegram 通知",
+        "slot": "settings",
+        "handler": "renderSettings",
+        "save": "saveSettings",
+        "test": "sendTest"
+      }
+    ]
+  }
+}

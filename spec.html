@@ -4,71 +4,31 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>插件规范 · Linplayer</title>
+    <title>插件规范 · LinPlayer 插件</title>
+    <meta name="description" content="LinPlayer 插件 v2 完整规范：清单字段、权限、贡献点、API。" />
     <link rel="icon" type="image/png" href="assets/icons/app_icon_transparent.png" />
-    <script>
-      try {
-        if (sessionStorage.getItem("lp_seen")) document.documentElement.setAttribute("data-warm", "1");
-        else sessionStorage.setItem("lp_seen", "1");
-      } catch (e) {}
-    </script>
-    <link rel="stylesheet" href="assets/vendor/animate/animate.min.css" />
-    <link rel="stylesheet" href="assets/ui.css?v=4" />
+    <link rel="stylesheet" href="assets/ui.css?v=5" />
   </head>
-  <body>
-    <div id="preloader">
-      <img
-        class="pl-logo animate__animated animate__pulse animate__infinite"
-        src="assets/icons/app_icon_transparent.png"
-        alt="Linplayer"
-      />
-      <div class="pl-bar"></div>
-      <div class="pl-text">正在加载插件规范…</div>
-    </div>
+  <body data-md="SPEC.md">
+    <header class="top">
+      <a class="brand" href="index.html">
+        <img src="assets/icons/app_icon_transparent.png" alt="" />
+        <span>LinPlayer <b>插件市场</b></span>
+      </a>
+      <nav>
+        <a href="index.html">插件</a>
+        <a href="guide.html">开发指南</a>
+        <a href="spec.html" class="on">规范</a>
+        <a href="https://github.com/zzzwannasleep/LinplayerPluginsRepository" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+    </header>
 
-    <div id="app" class="is-hidden">
-      <header class="topbar">
-        <div class="topbar__inner">
-          <div class="brand">
-            <img class="brand__logo" src="assets/icons/app_icon_transparent.png" alt="" />
-            <div>
-              <div class="brand__title">插件规范 V1</div>
-              <div class="brand__sub">QuickJS 沙箱 · ctx API · 扩展点 · 权限模型</div>
-            </div>
-          </div>
-          <nav class="nav">
-            <a href="index.html">插件市场</a>
-            <a href="guide.html">开发指南</a>
-            <a href="spec.html" class="is-active">插件规范</a>
-            <a
-              href="https://github.com/zzzwannasleep/LinplayerPluginsRepository"
-              target="_blank"
-              rel="noreferrer"
-              >GitHub</a
-            >
-          </nav>
-        </div>
-      </header>
-
-      <main class="wrap">
-        <div class="docwrap">
-          <aside class="toc-wrap">
-            <div class="toc-title">目录</div>
-            <nav id="toc" class="toc"></nav>
-          </aside>
-          <article class="docmain">
-            <div id="status" class="docstatus">正在加载阅读版规范…</div>
-            <div id="content" class="md" aria-live="polite"></div>
-          </article>
-        </div>
-      </main>
-    </div>
-
-    <noscript>
-      <div style="padding: 24px; text-align: center">该页面需要启用 JavaScript 才能加载规范。</div>
-    </noscript>
+    <main class="wrap doc">
+      <nav id="toc" class="toc"></nav>
+      <article id="prose" class="prose"><p class="hint">正在加载…</p></article>
+    </main>
 
     <script src="assets/vendor/marked/marked.min.js"></script>
-    <script type="module" src="assets/spec.js?v=4"></script>
+    <script type="module" src="assets/spec.js?v=5"></script>
   </body>
 </html>
