@@ -1,19 +1,33 @@
 {
   "$schema": "../../../schemas/manifest.schema.json",
   "id": "com.linplayer.vod",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "apiVersion": 2,
   "name": "VOD 资源站",
-  "description": "填一个资源站的采集接口地址(形如 …/api.php/provide/vod/),就能按分类浏览:海报墙、剧集分集、多线路、搜索、点开就播。一个站配一个服务器,想加几个加几个。",
+  "description": "填一个资源站的采集接口地址(形如 …/api.php/provide/vod/),就能像逛影视 App 一样逛它:分类横条、无限下拉的海报墙、单击进详情、简介演职员、多线路切换、点集就播。一个站配一个服务器,想加几个加几个。",
   "author": "LinPlayer",
   "category": "source",
-  "targets": ["pc", "mobile"],
+  "targets": [
+    "pc",
+    "mobile"
+  ],
   "icon": "icon.svg",
   "license": "MIT",
-  "tags": ["影视", "资源站", "采集", "vod", "数据源"],
+  "tags": [
+    "影视",
+    "资源站",
+    "采集",
+    "vod",
+    "数据源"
+  ],
   "homepage": "https://github.com/zzzwannasleep/LinplayerPluginsRepository",
-  "permissions": ["sources", "http"],
-  "httpAllowedHosts": ["$sourceServer"],
+  "permissions": [
+    "sources",
+    "http"
+  ],
+  "httpAllowedHosts": [
+    "$sourceServer"
+  ],
   "contributes": {
     "dataSources": [
       {

@@ -295,7 +295,7 @@
     {
       "id": "com.linplayer.vod",
       "name": "VOD 资源站",
-      "description": "填一个资源站的采集接口地址(形如 …/api.php/provide/vod/),就能按分类浏览:海报墙、剧集分集、多线路、搜索、点开就播。一个站配一个服务器,想加几个加几个。",
+      "description": "填一个资源站的采集接口地址(形如 …/api.php/provide/vod/),就能像逛影视 App 一样逛它:分类横条、无限下拉的海报墙、单击进详情、简介演职员、多线路切换、点集就播。一个站配一个服务器,想加几个加几个。",
       "author": "LinPlayer",
       "category": "source",
       "tags": [
@@ -315,10 +315,10 @@
       ],
       "versions": [
         {
-          "version": "1.0.0",
+          "version": "2.0.0",
           "api_version": 2,
-          "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.vod-1.0.0.ipk",
-          "sha256": "f5467a10126776457ed05760b822de407399d4b7c6e17d22b6710ecb899a71e0"
+          "package_url": "https://raw.githubusercontent.com/zzzwannasleep/LinplayerPluginsRepository/main/packages/com.linplayer.vod-2.0.0.ipk",
+          "sha256": "bdeb7df922d23da280b615ca20449172f6d37f78e682e8743c7648186bb6a788"
         }
       ],
       "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzJmNmZlZCIvPgogIDxyZWN0IHg9IjEyIiB5PSIxNCIgd2lkdGg9IjE3IiBoZWlnaHQ9IjI0IiByeD0iMyIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iLjU1Ii8+CiAgPHJlY3QgeD0iMjQiIHk9IjExIiB3aWR0aD0iMjAiIGhlaWdodD0iMzAiIHJ4PSIzIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuOCIvPgogIDxyZWN0IHg9IjM4IiB5PSIxNCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjI0IiByeD0iMyIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iLjU1Ii8+CiAgPHBhdGggZD0iTTMxIDIwbDkgNi05IDZ6IiBmaWxsPSIjMmY2ZmVkIi8+CiAgPHBhdGggZD0iTTE0IDQ4aDM2TTE0IDU1aDI0IiBzdHJva2U9IiNmZmQxNjYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPgo=",
