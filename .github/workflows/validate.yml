@@ -13,6 +13,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
       # 先证明校验器自己是活的。
       # 一个只会说 OK 的校验器和没有校验器是一回事 —— 自检会往一份干净的 manifest 里
@@ -36,6 +39,12 @@ jobs:
       #   - registry 的元数据是最新的：build.py --check（不写文件、不打包）
       - name: 检查 registry.json 是最新的
         run: python tools/build.py --check
+
+      # 校验器只看 manifest 合不合规，看不出插件的逻辑对不对。
+      # VOD 资源站那套解析（$$$ 多线路对齐、翻页边界、脏地址过滤、两种故障要报成
+      # 两句不同的话）全是编译不出来的东西，只能拿夹具跑。
+      - name: VOD 资源站行为测试
+        run: node tools/test_vod.mjs
 
   pages:
     needs: validate
