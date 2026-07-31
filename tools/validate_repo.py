@@ -200,6 +200,8 @@ def validate_manifest(m, rep, where, plugin_dir=None, id_dir=None, ver_dir=None)
         main = m.get("main") or "main.js"
         if not (plugin_dir / main).is_file():
             rep.err(where, f"入口文件不存在: {main}")
+        else:
+            _check_source_bytes(plugin_dir / main, rep, where)
         icon = m.get("icon")
         if isinstance(icon, str) and icon:
             ip = plugin_dir / icon
@@ -207,6 +209,31 @@ def validate_manifest(m, rep, where, plugin_dir=None, id_dir=None, ver_dir=None)
                 rep.err(where, f"图标文件不存在: {icon}")
             elif ip.stat().st_size > MAX_ICON_BYTES:
                 rep.err(where, f"图标过大（{ip.stat().st_size} 字节 > {MAX_ICON_BYTES}）；它会被内联进 registry.json")
+
+
+def _check_source_bytes(path, rep, where):
+    """入口 JS 里不许有裸控制字符。
+
+    2026-08-01 真踩到:main.js 里混进两个 0x00,manifest 全合规、包也打得出来、
+    装也装得上,**只有 plugin_enable 那一刻**报
+    「String contained internal null bytes ... at position: 10968」——
+    宿主把源码转成 C 字符串时才炸,而那句报错完全看不出是插件源码的问题。
+
+    允许 \\t \\n \\r,其余 0x00–0x1F 和 0x7F 一律拒。顺带拦掉 UTF-8 BOM:
+    QuickJS 不吃它,表现同样是一句莫名其妙的语法错误。
+    """
+    try:
+        raw = path.read_bytes()
+    except OSError as e:
+        rep.err(where, f"读不了入口文件: {e}")
+        return
+    if raw.startswith(b"\xef\xbb\xbf"):
+        rep.err(where, f"{path.name} 带 UTF-8 BOM，QuickJS 不吃它（存成不带 BOM 的 UTF-8）")
+    bad = [i for i, c in enumerate(raw) if (c < 0x20 and c not in (0x09, 0x0A, 0x0D)) or c == 0x7F]
+    if bad:
+        spots = ", ".join(f"位置 {i}(0x{raw[i]:02X})" for i in bad[:5])
+        more = f" 等 {len(bad)} 处" if len(bad) > 5 else ""
+        rep.err(where, f"{path.name} 含裸控制字符：{spots}{more} —— 装得上但一启用就报 null bytes")
 
 
 def _validate_contribution(kind, item, rep, where, plugin_dir):
