@@ -1,83 +1,37 @@
-# LinPlayer 插件仓库
+# LinPlayer 官方插件仓库(**待发布的内容,还没推上去**)
 
-LinPlayer 的官方插件源。市场页：<https://lplugins.902541.xyz>
+这个目录是**按 SPEC 15.1 准备好的官方插件仓库内容**,还没有推到任何远端。
 
-App 里的插件市场默认订阅的就是这个仓库的 `registry.json`。
+> 官方仓库 = 用户 GitHub 上现有的插件仓库,**清空后整仓重建**(D149)。
+> 清空是破坏性操作 —— 动手前要再向项目负责人确认一次,清空时不动仓库的 Pages 设置(D395)。
+> 在那次确认之前,这份内容只存在于主仓库的 `plugin-repo/` 下。
 
-- [开发指南](GUIDE.md) —— 五分钟写出第一个插件
-- [插件规范](SPEC.md) —— `apiVersion: 2` 的完整参考
+## 里面有什么
 
-## 目录
-
-| 路径 | 是什么 |
-|---|---|
-| `plugins/<id>/<version>/` | 插件源码。**唯一的元数据来源**。 |
-| `packages/*.ipk` | 打包产物。由脚本生成，纳入版本库供市场直接下载。 |
-| `registry.json` | 市场索引。由脚本生成，**不要手写**。 |
-| `schemas/manifest.schema.json` | 给编辑器补全用的清单 schema。 |
-| `tools/` | 校验 / 打包 / 构建。 |
-| `index.html` `guide.html` `spec.html` `assets/` | 市场网站。零构建、零依赖（除了一个 36KB 的 Markdown 渲染器）。 |
-
-## 现有插件
-
-| 插件 | 分类 | 干什么 |
-|---|---|---|
-| `com.linplayer.hello` | 工具 | 最小教学示例。想写插件从抄它开始。 |
-| `com.linplayer.ui-kit` | 界面 | 每一种界面块画一遍并贴上对应 JSON。写插件时开着照抄。 |
-| `com.linplayer.sandbox-demo` | 界面 | iframe 逃生舱：声明式界面画不出来的东西怎么办。 |
-| `com.linplayer.m3u` | 数据源 | 填一个 m3u 地址，按分组浏览频道并播放。 |
-| `com.linplayer.telegram-notify` | 通知 | 看完一集给自己的 Telegram 发条消息。 |
-| `com.linplayer.uhdnow` | 工具 | UHDNow 的流量 / 求片 / 测速三合一。 |
-
-## 发布流程
-
-```bash
-# 1. 插件放进 plugins/<id>/<version>/，目录名必须和 manifest 里的 id、version 一致
-# 2. 校验 + 打包 + 更新索引
-python tools/build.py
-# 3. 提交这三样
-git add plugins packages registry.json
+```
+packages/sdk/      @linplayer/plugin-sdk —— 类型 + JSON Schema(.d.ts 随应用发版同步进来,D410)
+packages/cli/      @linplayer/cli —— 按平台装 lp 二进制(D308)
+registry/          官方市场索引 index.json(D28)
+site/              Astro 站:插件墙 + 开发者文档(D405)
+docs/              开发者文档源,中英双语(D150 D399)
+examples/          每个扩展点一个几十行的最小示例(D151)
+plugins/           官方插件源码 —— **推的时候从主仓库 plugins/ 同步过来**,这里不放副本
 ```
 
-`build.py` 会先用和 CI 同一套规则校验，不过就中止，不会产出半成品。
+`plugins/` 故意是空的:主仓库的 `plugins/` 才是正本,两处各存一份迟早对不上。
+同步由 `scripts/sync-plugin-repo.sh` 做。
 
-仓库地址从 `GITHUB_REPOSITORY` 或 git remote 推导，**没有硬编码**。
-换组织或改仓库名之后重跑一次即可，不用手改脚本。
+## 许可证
 
-```bash
-python tools/validate_repo.py            # 只校验
-python tools/validate_repo.py --selftest # 校验器自检（往干净 manifest 里注入坏值，确认它会红）
-python tools/build.py --check            # 只检查产物是不是最新的（不写文件）
-python tools/pack_plugin.py plugins/<id>/<ver>/   # 单个打包，顺便打印 sha256
-```
+**整仓 AGPL-3.0-or-later**,和 LinPlayer 主体一致(D566,2026-09-21 定,推翻 D519 的分法)。
 
-## 几条不显然的规矩
+这也解掉了 D519 自己标出来的那个卡点:`lp` 复用主仓库(AGPL)的宿主代码,
+按 MIT 发布本来需要版权人另行授权、还要确认他人贡献 —— 同为 AGPL 之后这一步不再需要。
 
-**打包是确定性的，但不保证跨平台逐字节相同。** 时间戳、文件顺序、权限位、
-`create_system` 都钉死了，索引里也没有任何时间戳；但 deflate 压缩流跨 zlib 版本
-不保证一致（Windows 和 Linux 实测就不同）。所以 CI **不比字节**，而是逐文件比
-`.ipk` 里的内容和 `plugins/` 里的源码 —— 平台无关，而且能直接点名是哪个文件对不上。
+☠ 要在 `@linplayer/plugin-sdk` 的 README 里写清一句:**这不要求第三方插件也用 AGPL**。
+  那个包只提供类型(`.d.ts` 构建时被擦掉,运行时由宿主注入),**不进插件产物**。
+  不写的话作者会以为装了它自己就得开源,直接劝退。
 
-**索引里的版本键是 snake_case。** `package_url` 不是 `packageUrl`。写成驼峰会被 App
-静默忽略，整条插件从市场里消失而两边都不报错。`author` 同理，必须是字符串。
+## 地址
 
-**图标内联进索引。** 构建时压成 data URI，所以市场页一个额外请求都不发、永远不碎图，
-也不受图床可达性影响。代价是索引变大，因此图标有 64KB 上限。
-
-**分发走 GitHub raw，不要挪到 Cloudflare。** 国内有地方会阻断 CF，GitHub 反而更稳。
-
-**只做 sha256，不做代码签名。** 校验和保证拿到的和仓库里的是同一份，不代表内容
-被审计过。
-
-## v1 去哪了
-
-`apiVersion: 1` 的插件在当前版本的 App 上装不上，**没有兼容层**。
-`runtime` / `extends` / `emby.credentials` / `cfproxy` 这些概念全部移除，
-理由写在 [SPEC.md](SPEC.md) 里。旧插件的源码在 git 历史里。
-
-两个 iOS 专用插件也一并删除 —— 苹果全线不做了。
-`cf-proxy` 插件删除 —— CF 优选反代已经是 App 的内置功能。
-
-## 授权
-
-代码 MIT（见 [LICENSE](LICENSE)）。各插件访问的第三方服务遵循各自的条款。
+站点用的自定义域名**存在仓库的 Pages 设置里**,仓库文件与提交里不出现域名(SPEC 15.6)。

@@ -1,0 +1,10 @@
+---
+import Detail from '../../components/Detail.astro';
+import { plugins, slugOf } from '../../lib/registry';
+
+export function getStaticPaths() {
+  return plugins.map((e) => ({ params: { slug: slugOf(e.id) }, props: { entry: e } }));
+}
+const { entry } = Astro.props;
+---
+<Detail entry={entry} lang="zh" />
